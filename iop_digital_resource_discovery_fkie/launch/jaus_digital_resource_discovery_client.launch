@@ -1,0 +1,14 @@
+<launch>
+  <arg name="ns" default="telemax"/>
+  <arg name="id_subsystem" default="127"/>
+  <arg name="id_node" default="64"/>
+  <group ns="$(arg ns)">
+    <node respawn="false" pkg="iop_digital_resource_discovery_fkie" type="iop_digital_resource_discovery_client" name="iop_digital_resource_discovery_client" >
+      <param name="capability_group" value="iop_bridge"/>
+      <param name="id_subsystem" value="$(arg id_subsystem)"/>
+      <param name="id_node" value="$(arg id_node)"/>
+      <param name="id_component" value="201"/>
+      <param name="register_own_services" value="false" />
+    </node>
+  </group>
+</launch>

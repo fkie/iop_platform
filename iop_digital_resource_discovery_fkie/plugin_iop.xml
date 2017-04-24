@@ -1,0 +1,12 @@
+<library path="libiop_digital_resource_discovery_fkie">
+  <class name="urn:jaus:jss:iop:DigitalResourceDiscovery_1_0" type="iop::DigitalResourceDiscoveryPlugin_1_0" base_class_type="iop::PluginInterface">
+    <description>
+      DigitalResourceDiscovery Service Plugin
+    </description>
+  </class>
+  <class name="urn:jaus:jss:iop:DigitalResourceDiscoveryClient_1_0" type="iop::DigitalResourceDiscoveryClientPlugin_1_0" base_class_type="iop::PluginInterface">
+    <description>
+      DigitalResourceDiscovery client Service Plugin, used e.g. by OCU
+    </description>
+  </class>
+</library>

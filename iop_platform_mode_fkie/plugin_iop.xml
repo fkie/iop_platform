@@ -1,0 +1,7 @@
+<library path="libiop_platform_mode_fkie">
+  <class name="urn:jaus:jss:iop:PlatformMode_1_1" type="iop::PlatformModePlugin_1_1" base_class_type="iop::PluginInterface">
+    <description>
+      PlatformMode Service Plugin
+    </description>
+  </class>
+</library>

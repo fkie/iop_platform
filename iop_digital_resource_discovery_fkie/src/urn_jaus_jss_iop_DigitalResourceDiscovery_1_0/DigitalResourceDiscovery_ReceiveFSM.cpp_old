@@ -1,0 +1,121 @@
+
+
+#include "urn_jaus_jss_iop_DigitalResourceDiscovery_1_0/DigitalResourceDiscovery_ReceiveFSM.h"
+
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+
+
+using namespace JTS;
+
+namespace urn_jaus_jss_iop_DigitalResourceDiscovery_1_0
+{
+
+static std::vector<RegisterDigitalResourceEndpoint::Body::RegisterDigitalResourceSeq> resources;
+static std::string video_url;
+static ros::Subscriber rtsp_sub;
+
+void handl(const std_msgs::String::ConstPtr& msg) {
+  /*
+   * Store the URL of the rtsp stream. This will be returned by discovering.
+   */
+  video_url = msg->data;
+  printf("[DigitalResourceDiscovery] received video URL: %s\n", video_url.c_str());
+}
+
+DigitalResourceDiscovery_ReceiveFSM::DigitalResourceDiscovery_ReceiveFSM(urn_jaus_jss_core_Transport_1_0::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events_1_0::Events_ReceiveFSM* pEvents_ReceiveFSM)
+{
+
+  /*
+   * If there are other variables, context must be constructed last so that all
+   * class variables are available if an EntryAction of the InitialState of the
+   * statemachine needs them.
+   */
+
+  printf("[DigitalResourceDiscovery] constructor\n");
+  context = new DigitalResourceDiscovery_ReceiveFSMContext(*this);
+  this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+  this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+
+  ros::NodeHandle n;
+  rtsp_sub = n.subscribe("mapcam", 1, handl);
+}
+
+
+
+DigitalResourceDiscovery_ReceiveFSM::~DigitalResourceDiscovery_ReceiveFSM() 
+{
+        delete context;
+}
+
+void DigitalResourceDiscovery_ReceiveFSM::setupNotifications()
+{
+  pEvents_ReceiveFSM->registerNotification("Receiving_Ready", ieHandler, "InternalStateChange_To_DigitalResourceDiscovery_ReceiveFSM_Receiving_Ready", "Events_ReceiveFSM");
+  pEvents_ReceiveFSM->registerNotification("Receiving", ieHandler, "InternalStateChange_To_DigitalResourceDiscovery_ReceiveFSM_Receiving_Ready", "Events_ReceiveFSM");
+  registerNotification("Receiving_Ready", pEvents_ReceiveFSM->getHandler(), "InternalStateChange_To_Events_ReceiveFSM_Receiving_Ready", "DigitalResourceDiscovery_ReceiveFSM");
+  registerNotification("Receiving", pEvents_ReceiveFSM->getHandler(), "InternalStateChange_To_Events_ReceiveFSM_Receiving", "DigitalResourceDiscovery_ReceiveFSM");
+}
+
+void DigitalResourceDiscovery_ReceiveFSM::AddDigitalResourceEndpointAction(Receive::Body::ReceiveRec transportData, RegisterDigitalResourceEndpoint msg)
+{
+	/// Insert User Code HERE
+  JausAddress sender(transportData.getSrcSubsystemID(),
+                       transportData.getSrcNodeID(),
+                       transportData.getSrcComponentID());
+  RegisterDigitalResourceEndpoint::Body::RegisterDigitalResourceSeq item;
+  item.setRequestIDRec(*msg.getBody()->getRegisterDigitalResourceSeq()->getRequestIDRec());
+  item.setDigitalResourceEndpointRec(*msg.getBody()->getRegisterDigitalResourceSeq()->getDigitalResourceEndpointRec());
+  resources.push_back(item);
+  printf("[DigitalResourceDiscovery] register: requestedID[%d], resourceID[%d], %s\n", item.getRequestIDRec()->getRequestID(), item.getDigitalResourceEndpointRec()->getResourceID(), item.getDigitalResourceEndpointRec()->getServerURL().c_str());
+  unsigned char request_id = msg.getBody()->getRegisterDigitalResourceSeq()->getRequestIDRec()->getRequestID();
+  RegisterDigitalResourceEndpoint::Body::RegisterDigitalResourceSeq::DigitalResourceEndpointRec *endpoint = msg.getBody()->getRegisterDigitalResourceSeq()->getDigitalResourceEndpointRec();
+  unsigned char server_type = endpoint->getServerType();
+//  unsigned int iop_id = *endpoint->getIOP_ID();
+  unsigned short resource_id = endpoint->getResourceID();
+  std::string server_url = endpoint->getServerURL();
+  ConfirmDigitalResourceEndpoint response;
+  response.getBody()->getConfirmDigitalResourceEndpointRec()->setRequestID(request_id);
+  response.getBody()->getConfirmDigitalResourceEndpointRec()->setID(request_id);
+  printf("send confirm to %d.%d\n", sender.getNodeID(), sender.getComponentID());
+  sendJausMessage(response, sender);
+}
+
+void DigitalResourceDiscovery_ReceiveFSM::RemoveDigitalResourceEndpointAction(Receive::Body::ReceiveRec transportData, RemoveDigitalResourceEndpoint msg)
+{
+	/// Insert User Code HERE
+  printf("[DigitalResourceDiscovery] RemoveDigitalResourceEndpointAction: not implemented\n");
+}
+
+void DigitalResourceDiscovery_ReceiveFSM::SendAction(std::string arg0, Receive::Body::ReceiveRec transportData)
+{
+  /// Insert User Code HERE
+  JausAddress sender(transportData.getSrcSubsystemID(),
+                     transportData.getSrcNodeID(),
+                     transportData.getSrcComponentID());
+
+  printf("[DigitalResourceDiscovery] %s\n", arg0.c_str());
+
+  if(arg0 == "ReportDigitalResourceEndpoint") {
+    printf("[DigitalResourceDiscovery]   ReportDigitalResourceEndpoint\n");
+    ReportDigitalResourceEndpoint response;
+    for (unsigned int i = 0; i < resources.size(); i++) {
+      response.getBody()->getReportFileTransferEndpointList()->addElement((ReportDigitalResourceEndpoint::Body::ReportFileTransferEndpointList::DigitalResourceEndpointRec &)*resources[i].getDigitalResourceEndpointRec());
+    }
+    sendJausMessage(response, sender);
+  } else if(arg0 == "ConfirmDigitalResourceEndpoint") {
+    // ignore confirmation messages, because there are handled in registration handlers
+//    ConfirmDigitalResourceEndpoint response;
+//    response.getBody()->setConfirmDigitalResourceEndpointRec((ConfirmDigitalResourceEndpoint::Body::ConfirmDigitalResourceEndpointRec &) *resources[resources.size()-1].getDigitalResourceEndpointRec());
+//    sendJausMessage(response, sender);
+  } else {
+    printf("[DigitalResourceDiscovery] '%s' not implemented!\n", arg0.c_str());
+  }
+
+}
+
+
+
+
+
+};

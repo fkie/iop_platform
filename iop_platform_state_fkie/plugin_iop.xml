@@ -1,0 +1,12 @@
+<library path="libiop_platform_state_fkie">
+  <class name="urn:jaus:jss:iop:PlatformState_1_0" type="iop::PlatformStatePlugin_1_0" base_class_type="iop::PluginInterface">
+    <description>
+      PlatformState Service Plugin
+    </description>
+  </class>
+  <class name="urn:jaus:jss:iop:PlatformStateClient_1_0" type="iop::PlatformStateClientPlugin_1_0" base_class_type="iop::PluginInterface">
+    <description>
+      PlatformState client Service Plugin, used e.g. by OCU
+    </description>
+  </class>
+</library>

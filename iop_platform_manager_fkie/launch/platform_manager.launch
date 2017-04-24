@@ -1,0 +1,58 @@
+<launch>
+  <arg name="ns" default="myrobot"/>
+  <arg name="system_id" default="2"/>
+  <arg name="system_type" default="10001"/>
+  <arg name="id_subsystem" default="133"/>
+  <arg name="id_node" default="64"/>
+  <group ns="$(arg ns)">
+      <node name="iop_platform_manager" pkg="iop_component_fkie" type="iop_component">
+        <param name="capability_group" value="iop_bridge"/>
+        <rosparam param="services">
+          [
+            iop_digital_resource_discovery_fkie: "urn:jaus:jss:iop:DigitalResourceDiscovery_1_0",
+            iop_health_monitor_fkie: "urn:jaus:jss:exp:aeodrs:HealthMonitor_1_2",
+            iop_platform_mode_fkie: "urn:jaus:jss:iop:PlatformMode_1_1",
+            iop_platform_state_fkie: "urn:jaus:jss:iop:PlatformState_1_0",
+            iop_discovery_1_0_fkie: "urn:jaus:jss:core:Discovery_1_0",
+            iop_discovery_1_0_fkie: "urn:jaus:jss:core:DiscoveryClient_1_0",
+            iop_management_1_0_fkie: "urn:jaus:jss:core:Management_1_0",
+            iop_accesscontrol_1_0_fkie: "urn:jaus:jss:core:AccessControl_1_0",
+            iop_events_1_0_fkie: "urn:jaus:jss:core:Events_1_0",
+            iop_events_1_0_fkie: "urn:jaus:jss:core:EventsClient_1_0",
+            iop_transport_1_0_fkie: "urn:jaus:jss:core:Transport_1_0",
+          ]
+        </rosparam>
+        <param name="iop_address" value="$(arg id_subsystem).$(arg id_node).15"/>
+        <param name="name_subsystem" value="$(arg ns)"/>
+        <param name="name_node" value="Platform"/>
+        <param name="enable_ros_interface" value="true"/>
+        <param name="platform_mode" value="0"/>
+        <param name="mode_status" value="1"/>
+        <!--
+          0: Reserved
+          1: System Identification
+          2: Subsystem Identification
+          3: Node Identification
+          4: Component Identification
+          5 – 255: Reserved
+         -->
+        <param name="system_id" value="$(arg system_id)"/>
+        <!-- 
+          00000: Reserved
+          10001: VEHICLE
+          10002-20000: Reserved
+          20001: OCU
+          20002-30000: Reserved
+          30001: OTHER_SUBSYSTEM
+          30002-40000: Reserved
+          40001: NODE
+          40002-50000: Reserved
+          50001: PAYLOAD
+          50002-60000: Reserved
+          60001: COMPONENT
+          60002-65535: Reserved"
+         -->
+        <param name="system_type" value="$(arg system_type)"/>
+    </node>
+  </group>
+</launch>
