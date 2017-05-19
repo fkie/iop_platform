@@ -36,31 +36,15 @@ DigitalResourceDiscoveryClientPlugin_1_0::DigitalResourceDiscoveryClientPlugin_1
 	p_transport_service = NULL;
 }
 
-DigitalResourceDiscoveryClientPlugin_1_0::~DigitalResourceDiscoveryClientPlugin_1_0()
-{
-
-}
-
-JTS::Service* DigitalResourceDiscoveryClientPlugin_1_0::get_iop_service()
+JTS::Service* DigitalResourceDiscoveryClientPlugin_1_0::get_service()
 {
 	return p_my_service;
 }
 
-const std::type_info & DigitalResourceDiscoveryClientPlugin_1_0::get_iop_service_type()
+void DigitalResourceDiscoveryClientPlugin_1_0::create_service(JTS::JausRouter* jaus_router)
 {
-	return typeid(DigitalResourceDiscoveryClientService);
-}
-
-const std::type_info & DigitalResourceDiscoveryClientPlugin_1_0::get_base_service_type()
-{
-	return typeid(EventsClientService);
-}
-
-
-void DigitalResourceDiscoveryClientPlugin_1_0::create_jts_service(JTS::JausRouter* jaus_router)
-{
-	p_base_service = dynamic_cast<EventsClientService *>(get_base_service());
-	p_transport_service = dynamic_cast<TransportService *>(get_base_service(2));
+	p_base_service = static_cast<EventsClientService *>(get_base_service());
+	p_transport_service = static_cast<TransportService *>(get_base_service(2));
 	p_my_service = new DigitalResourceDiscoveryClientService(jaus_router, p_transport_service, p_base_service);
 }
 

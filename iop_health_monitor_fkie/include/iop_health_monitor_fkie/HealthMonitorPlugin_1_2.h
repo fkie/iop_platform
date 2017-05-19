@@ -39,15 +39,8 @@ class DllExport HealthMonitorPlugin_1_2 : public PluginInterface
 public:
 	HealthMonitorPlugin_1_2();
 
-	JTS::Service* get_iop_service();
-	const std::type_info & get_iop_service_type();
-	const std::type_info & get_base_service_type();
-	void create_jts_service(JTS::JausRouter* jaus_router);
-	virtual ~HealthMonitorPlugin_1_2();
-
-	jVariableLengthString get_service_uri() { return "urn:jaus:jss:exp:aeodrs:HealthMonitor"; }
-	jUnsignedByte get_version_number_major() { return 1; }
-	jUnsignedByte get_version_number_minor() { return 2; }
+	JTS::Service* get_service();
+	void create_service(JTS::JausRouter* jaus_router);
 
 protected:
 	urn_jaus_jss_exp_aeodrs_HealthMonitor_1_2::HealthMonitorService *p_my_service;

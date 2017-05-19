@@ -38,32 +38,16 @@ PlatformModePlugin_1_1::PlatformModePlugin_1_1()
 	p_events_service = NULL;
 }
 
-PlatformModePlugin_1_1::~PlatformModePlugin_1_1()
-{
-
-}
-
-JTS::Service* PlatformModePlugin_1_1::get_iop_service()
+JTS::Service* PlatformModePlugin_1_1::get_service()
 {
 	return p_my_service;
 }
 
-const std::type_info & PlatformModePlugin_1_1::get_iop_service_type()
+void PlatformModePlugin_1_1::create_service(JTS::JausRouter* jaus_router)
 {
-	return typeid(PlatformModeService);
-}
-
-const std::type_info & PlatformModePlugin_1_1::get_base_service_type()
-{
-	return typeid(AccessControlService);
-}
-
-
-void PlatformModePlugin_1_1::create_jts_service(JTS::JausRouter* jaus_router)
-{
-	p_base_service = dynamic_cast<AccessControlService *>(get_base_service());
-	p_events_service = dynamic_cast<EventsService *>(get_base_service(2));
-	p_transport_service = dynamic_cast<TransportService *>(get_base_service(3));
+	p_base_service = static_cast<AccessControlService *>(get_base_service());
+	p_events_service = static_cast<EventsService *>(get_base_service(2));
+	p_transport_service = static_cast<TransportService *>(get_base_service(3));
 	p_my_service = new PlatformModeService(jaus_router, p_transport_service, p_events_service, p_base_service);
 }
 
