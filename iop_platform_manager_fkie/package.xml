@@ -11,10 +11,10 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>iop_builder_fkie</run_depend>
   <run_depend>iop_digital_resource_discovery_fkie</run_depend>
-  <run_depend>iop_discovery_1_0_fkie</run_depend>
+  <run_depend>iop_discovery_fkie</run_depend>
   <run_depend>iop_health_monitor_fkie</run_depend>
-  <run_depend>iop_liveness_1_0_fkie</run_depend>
-  <run_depend>iop_management_1_0_fkie</run_depend>
+  <run_depend>iop_liveness_fkie</run_depend>
+  <run_depend>iop_management_fkie</run_depend>
   <run_depend>iop_platform_mode_fkie</run_depend>
   <run_depend>iop_platform_state_fkie</run_depend>
 </package>

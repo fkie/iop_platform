@@ -1,5 +1,5 @@
 <library path="libiop_health_monitor_fkie">
-  <class name="HealthMonitor_1_2" type="iop::HealthMonitorPlugin_1_2" base_class_type="iop::PluginInterface">
+  <class name="HealthMonitor" type="iop::HealthMonitorPlugin" base_class_type="iop::PluginInterface">
     <description>
       IOP HealthMonitor Service Plugin
     </description>

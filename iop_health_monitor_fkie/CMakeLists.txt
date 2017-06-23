@@ -5,14 +5,14 @@ project(iop_health_monitor_fkie)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
-                    iop_accesscontrol_1_0_fkie
+                    iop_accesscontrol_fkie
                     iop_builder_fkie
                     iop_component_fkie
                     roscpp)
 iop_init(COMPONENT_ID 0)
 iop_export_service(
-    urn_jaus_jss_exp_aeodrs_HealthMonitor_1_2
-    urn_jaus_jss_exp_aeodrs_HealthMonitorClient_1_2
+    urn_jaus_jss_exp_aeodrs_HealthMonitor
+    urn_jaus_jss_exp_aeodrs_HealthMonitorClient
 )
 
 ###################################
@@ -22,7 +22,7 @@ catkin_package(
     INCLUDE_DIRS include/${PROJECT_NAME}
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
-        iop_accesscontrol_1_0_fkie
+        iop_accesscontrol_fkie
         iop_builder_fkie
         iop_component_fkie
 )
@@ -41,15 +41,15 @@ iop_code_generator(
     urn.jaus.jss.iop/HealthMonitorClient_V1.xml
   OWN_IDLS
   OVERRIDES
-    include/urn_jaus_jss_exp_aeodrs_HealthMonitor_1_2/HealthMonitor_ReceiveFSM.h
-    src/urn_jaus_jss_exp_aeodrs_HealthMonitor_1_2/HealthMonitor_ReceiveFSM.cpp
+    include/urn_jaus_jss_exp_aeodrs_HealthMonitor/HealthMonitor_ReceiveFSM.h
+    src/urn_jaus_jss_exp_aeodrs_HealthMonitor/HealthMonitor_ReceiveFSM.cpp
     src/main.cpp
   EXTERN_SERVICES
-      urn_jaus_jss_core_AccessControl_1_0
-      urn_jaus_jss_core_AccessControlClient_1_0
-      urn_jaus_jss_core_Events_1_0
-      urn_jaus_jss_core_EventsClient_1_0
-      urn_jaus_jss_core_Transport_1_0
+      urn_jaus_jss_core_AccessControl
+      urn_jaus_jss_core_AccessControlClient
+      urn_jaus_jss_core_Events
+      urn_jaus_jss_core_EventsClient
+      urn_jaus_jss_core_Transport
   GENERATED_SOURCES cppfiles
 )
 
@@ -58,7 +58,7 @@ include_directories(${catkin_INCLUDE_DIRS}
                     include/${PROJECT_NAME}
 )
 add_library(${PROJECT_NAME}
-            src/HealthMonitorPlugin_1_2.cpp
+            src/HealthMonitorPlugin.cpp
             ${cppfiles}
 )
 

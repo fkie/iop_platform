@@ -1,5 +1,5 @@
 <library path="libiop_digital_resource_discovery_fkie">
-  <class name="DigitalResourceDiscovery_1_0" type="iop::DigitalResourceDiscoveryPlugin_1_0" base_class_type="iop::PluginInterface">
+  <class name="DigitalResourceDiscovery" type="iop::DigitalResourceDiscoveryPlugin" base_class_type="iop::PluginInterface">
     <description>
       DigitalResourceDiscovery Service Plugin
     </description>
@@ -7,7 +7,7 @@
       <inherits_from id="urn:jaus:jss:core:Events" min_version="1.0"/>
     </iop_service>
   </class>
-  <class name="DigitalResourceDiscoveryClient_1_0" type="iop::DigitalResourceDiscoveryClientPlugin_1_0" base_class_type="iop::PluginInterface">
+  <class name="DigitalResourceDiscoveryClient" type="iop::DigitalResourceDiscoveryClientPlugin" base_class_type="iop::PluginInterface">
     <description>
       DigitalResourceDiscovery client Service Plugin, used e.g. by OCU
     </description>

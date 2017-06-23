@@ -5,14 +5,12 @@ project(iop_platform_state_fkie)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
-                    iop_accesscontrol_1_0_fkie
-                    iop_builder_fkie
-                    iop_component_fkie
+                    iop_accesscontrol_fkie
                     roscpp)
 iop_init(COMPONENT_ID 0)
 iop_export_service(
-    urn_jaus_jss_iop_PlatformState_1_0
-    urn_jaus_jss_iop_PlatformStateClient_1_0
+    urn_jaus_jss_iop_PlatformState
+    urn_jaus_jss_iop_PlatformStateClient
 )
 
 ###################################
@@ -22,9 +20,7 @@ catkin_package(
     INCLUDE_DIRS include/${PROJECT_NAME}
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
-        iop_accesscontrol_1_0_fkie
-        iop_builder_fkie
-        iop_component_fkie
+        iop_accesscontrol_fkie
 )
 
 ###########
@@ -41,36 +37,34 @@ iop_code_generator(
     urn.jaus.jss.iop/PlatformStateClient_V1.xml
   OWN_IDLS
   OVERRIDES
-    include/urn_jaus_jss_iop_PlatformState_1_0/PlatformState_ReceiveFSM.h
-    include/urn_jaus_jss_iop_PlatformStateClient_1_0/PlatformStateClient_ReceiveFSM.h
-    src/urn_jaus_jss_iop_PlatformState_1_0/PlatformState_PlatformStateFSM.cpp
-    src/urn_jaus_jss_iop_PlatformState_1_0/PlatformState_ReceiveFSM.cpp
-    src/urn_jaus_jss_iop_PlatformStateClient_1_0/PlatformStateClient_ReceiveFSM.cpp
+    include/urn_jaus_jss_iop_PlatformState/PlatformState_ReceiveFSM.h
+    include/urn_jaus_jss_iop_PlatformStateClient/PlatformStateClient_ReceiveFSM.h
+    src/urn_jaus_jss_iop_PlatformState/PlatformState_PlatformStateFSM.cpp
+    src/urn_jaus_jss_iop_PlatformState/PlatformState_ReceiveFSM.cpp
+    src/urn_jaus_jss_iop_PlatformStateClient/PlatformStateClient_ReceiveFSM.cpp
     src/main.cpp
   EXTERN_SERVICES
-      urn_jaus_jss_core_AccessControl_1_0
-      urn_jaus_jss_core_AccessControlClient_1_0
-      urn_jaus_jss_core_Events_1_0
-      urn_jaus_jss_core_EventsClient_1_0
-      urn_jaus_jss_core_Transport_1_0
+      urn_jaus_jss_core_AccessControl
+      urn_jaus_jss_core_AccessControlClient
+      urn_jaus_jss_core_Events
+      urn_jaus_jss_core_EventsClient
+      urn_jaus_jss_core_Transport
   GENERATED_SOURCES cppfiles
 )
 
 include_directories(${catkin_INCLUDE_DIRS}
-                    ${IOP_INCLUDE_DIRS}
                     include/${PROJECT_NAME}
 )
 
 add_library(${PROJECT_NAME}
-            src/PlatformStateClientPlugin_1_0.cpp
-            src/PlatformStatePlugin_1_0.cpp
+            src/PlatformStateClientPlugin.cpp
+            src/PlatformStatePlugin.cpp
             ${cppfiles}
 )
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
-                      ${IOP_LIBRARIES}
                       ${Boost_LIBRARIES}
 
 )
