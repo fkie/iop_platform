@@ -20,7 +20,7 @@ along with this program; or you can read the full license at
 
 /** \author Alexander Tiderko */
 
-#include "DigitalResourceEndpoint.h"
+#include <iop_digital_resource_discovery_fkie/DigitalResourceEndpoint.h>
 
 
 namespace digital_resource_endpoint

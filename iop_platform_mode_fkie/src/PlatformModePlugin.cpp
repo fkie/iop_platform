@@ -20,7 +20,7 @@ along with this program; or you can read the full license at
 
 /** \author Alexander Tiderko */
 
-#include <PlatformModePlugin.h>
+#include "PlatformModePlugin.h"
 #include <pluginlib/class_list_macros.h>
 
 using namespace iop;

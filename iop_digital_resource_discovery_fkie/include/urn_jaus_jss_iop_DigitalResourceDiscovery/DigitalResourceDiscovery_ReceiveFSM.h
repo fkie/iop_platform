@@ -39,7 +39,7 @@ typedef JTS::Send Send;
 
 
 #include "DigitalResourceDiscovery_ReceiveFSM_sm.h"
-#include "DigitalResourceEndpoint.h"
+#include <iop_digital_resource_discovery_fkie/DigitalResourceEndpoint.h>
 
 namespace urn_jaus_jss_iop_DigitalResourceDiscovery
 {

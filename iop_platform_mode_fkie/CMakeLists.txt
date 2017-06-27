@@ -14,7 +14,6 @@ iop_export_service(urn_jaus_jss_iop_PlatformMode)
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-    INCLUDE_DIRS include/${PROJECT_NAME}
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         iop_accesscontrol_fkie
@@ -42,9 +41,7 @@ iop_code_generator(
   GENERATED_SOURCES cppfiles
 )
 
-include_directories(${catkin_INCLUDE_DIRS}
-                    include/${PROJECT_NAME}
-)
+include_directories(${catkin_INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME}
             src/PlatformModePlugin.cpp
@@ -56,12 +53,6 @@ target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
                       ${Boost_LIBRARIES}
 
-)
-
-install(
-  DIRECTORY include/${PROJECT_NAME} DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
-  PATTERN "*.old" EXCLUDE
-  PATTERN "*.gen" EXCLUDE
 )
 
 install(

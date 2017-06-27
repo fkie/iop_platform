@@ -41,7 +41,7 @@ typedef JTS::Send Send;
 #include "DigitalResourceDiscoveryClient_ReceiveFSM_sm.h"
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include "DigitalResourceEndpoint.h"
+#include <iop_digital_resource_discovery_fkie/DigitalResourceEndpoint.h>
 #include <ros/ros.h>
 #include <iop_msgs_fkie/DigitalResourceEndpoints.h>
 #include <iop_msgs_fkie/QueryByAddr.h>
