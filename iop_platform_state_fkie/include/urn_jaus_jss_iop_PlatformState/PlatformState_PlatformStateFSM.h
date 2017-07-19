@@ -31,8 +31,8 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_iop_PlatformState/Messages/MessageSet.h"
 #include "urn_jaus_jss_iop_PlatformState/InternalEvents/InternalEventsSet.h"
 
-typedef JTS::Receive Receive;
-typedef JTS::Send Send;
+#include "InternalEvents/Receive.h"
+#include "InternalEvents/Send.h"
 
 
 
