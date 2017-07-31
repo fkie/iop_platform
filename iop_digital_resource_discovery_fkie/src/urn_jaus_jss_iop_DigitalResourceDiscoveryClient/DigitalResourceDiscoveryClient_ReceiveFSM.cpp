@@ -65,8 +65,8 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::setupNotifications()
 	pEventsClient_ReceiveFSM->registerNotification("Receiving", ieHandler, "InternalStateChange_To_DigitalResourceDiscoveryClient_ReceiveFSM_Receiving_Ready", "EventsClient_ReceiveFSM");
 	registerNotification("Receiving_Ready", pEventsClient_ReceiveFSM->getHandler(), "InternalStateChange_To_EventsClient_ReceiveFSM_Receiving_Ready", "DigitalResourceDiscoveryClient_ReceiveFSM");
 	registerNotification("Receiving", pEventsClient_ReceiveFSM->getHandler(), "InternalStateChange_To_EventsClient_ReceiveFSM_Receiving", "DigitalResourceDiscoveryClient_ReceiveFSM");
-	p_pnh.param("enable_ros_interface", p_enable_ros_interface, p_enable_ros_interface);
-	ROS_INFO_STREAM("[DigitalResourceDiscoveryClient] enable_ros_interface: " << p_enable_ros_interface);
+	// p_pnh.param("enable_ros_interface", p_enable_ros_interface, p_enable_ros_interface);
+	// ROS_INFO_STREAM("[DigitalResourceDiscoveryClient] enable_ros_interface: " << p_enable_ros_interface);
 	if (p_enable_ros_interface) {
 		p_pub_endoints = p_nh.advertise<iop_msgs_fkie::DigitalResourceEndpoints>("endpoints", 1, true);
 		p_srv_update_endpoints = p_nh.advertiseService("update_endpoints", &DigitalResourceDiscoveryClient_ReceiveFSM::pUpdateEndpointsSrv, this);
@@ -75,9 +75,12 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::setupNotifications()
 
 bool DigitalResourceDiscoveryClient_ReceiveFSM::pUpdateEndpointsSrv(iop_msgs_fkie::QueryByAddr::Request	&req, iop_msgs_fkie::QueryByAddr::Response &res)
 {
-	ROS_DEBUG_NAMED("DigitalResourceDiscoveryClient", "update endpoints of %d.%d.%d", req.address.subsystem_id, req.address.node_id, req.address.component_id);
-	discoverEndpoints(JausAddress(req.address.subsystem_id, req.address.node_id, req.address.component_id));
-	return true;
+	if (p_enable_ros_interface) {
+		ROS_DEBUG_NAMED("DigitalResourceDiscoveryClient", "update endpoints of %d.%d.%d", req.address.subsystem_id, req.address.node_id, req.address.component_id);
+		discoverEndpoints(JausAddress(req.address.subsystem_id, req.address.node_id, req.address.component_id));
+		return true;
+	}
+	return false;
 }
 
 void DigitalResourceDiscoveryClient_ReceiveFSM::confirmDigitalResourceEndpointAction(ConfirmDigitalResourceEndpoint msg, Receive::Body::ReceiveRec transportData)
@@ -144,7 +147,9 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::reportDigitalResourceEndpointAct
 		ep.address.component_id = v_endpoints[i].iop_id.getComponentID();
 		ros_msg.endpoints.push_back(ep);
 	}
-	p_pub_endoints.publish(ros_msg);
+	if (p_enable_ros_interface) {
+		p_pub_endoints.publish(ros_msg);
+	}
 	if (!class_discovery_callback_.empty()) {
 		class_discovery_callback_(v_endpoints, sender);
 	}
