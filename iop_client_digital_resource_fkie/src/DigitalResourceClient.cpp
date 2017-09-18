@@ -91,6 +91,8 @@ void DigitalResourceClient::enable_monitoring_only(std::string service_uri, Jaus
 void DigitalResourceClient::access_deactivated(std::string service_uri, JausAddress component)
 {
 	p_control_addr = JausAddress(0);
+	iop_msgs_fkie::DigitalResourceEndpoints ros_msg;
+	p_pub_endoints.publish(ros_msg);
 }
 
 void DigitalResourceClient::p_discovered_endpoints(std::vector<digital_resource_endpoint::DigitalResourceEndpoint> endpoints, JausAddress &address)
