@@ -41,6 +41,9 @@ along with this program; or you can read the full license at
 
 #include "PlatformMode_ReceiveFSM_sm.h"
 
+#include <ros/ros.h>
+#include <std_msgs/UInt8.h>
+
 namespace urn_jaus_jss_iop_PlatformMode
 {
 
@@ -65,12 +68,18 @@ public:
 	PlatformMode_ReceiveFSMContext *context;
 
 protected:
-  unsigned char platform_mode;
     /// References to parent FSMs
 	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
 	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
 
+	std::vector<int> p_supported_modes;
+	unsigned char platform_mode;
+	ros::NodeHandle p_pnh;
+	ros::Publisher p_pub_mode;
+	ros::Subscriber p_sub_mode;
+
+	void pRosMode(const std_msgs::UInt8::ConstPtr& msg);
 
 };
 

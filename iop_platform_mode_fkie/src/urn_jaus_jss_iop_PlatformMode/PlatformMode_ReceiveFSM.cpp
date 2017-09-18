@@ -46,10 +46,9 @@ PlatformMode_ReceiveFSM::PlatformMode_ReceiveFSM(urn_jaus_jss_core_Transport::Tr
 	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
 	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
-	int platformmode;
-	ros::NodeHandle pnh("~");
-	pnh.param("platform_mode", platformmode, 33);
-	platform_mode = platformmode;
+	p_pnh = ros::NodeHandle("~");
+	p_supported_modes.push_back(0);  // only Standard operation is supported by default
+	platform_mode = 0;
 }
 
 
@@ -68,6 +67,26 @@ void PlatformMode_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "PlatformMode_ReceiveFSM");
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "PlatformMode_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "PlatformMode_ReceiveFSM");
+
+	int platformmode;
+	p_pnh.param("platform_mode", platformmode, 0);
+	platform_mode = platformmode;
+	std::vector<double> multipliers;
+	p_pnh.param("supported_modes", p_supported_modes, p_supported_modes);
+	if (p_supported_modes.size() == 0) {
+		p_supported_modes.push_back(0);
+	}
+	p_pub_mode = p_pnh.advertise<std_msgs::UInt8>("platform_mode", 5, true);
+	std_msgs::UInt8 rosmsg;
+	rosmsg.data = platform_mode;
+	p_pub_mode.publish(rosmsg);
+	p_sub_mode = p_pnh.subscribe<std_msgs::UInt8>("set_platform_mode", 1, &PlatformMode_ReceiveFSM::pRosMode, this);
+
+}
+
+void PlatformMode_ReceiveFSM::pRosMode(const std_msgs::UInt8::ConstPtr& msg)
+{
+	platform_mode = msg->data;
 }
 
 void PlatformMode_ReceiveFSM::SendAction(std::string arg0, Receive::Body::ReceiveRec transportData)
@@ -79,21 +98,22 @@ void PlatformMode_ReceiveFSM::SendAction(std::string arg0, Receive::Body::Receiv
 	int mode_status;
 	ros::NodeHandle pnh("~");
 	ReportPlatformMode response;
-	ReportSupportedPlatformModes responses;
 	ReportPlatformMode::Body::ReportPlatformModeRec comp;
-	ReportSupportedPlatformModes::Body::SupportedPlatformModesList::PlatformModeRec comps;
 	if(strcmp(arg0.c_str(), "ReportPlatformMode") == 0)
 	{
-		pnh.param("mode_status",mode_status, 33);
-		comp.setStatus(mode_status);
+		comp.setStatus(1);  // 0="Initializing", 1="Active", 2="Exiting"
 		comp.setPlatformMode(platform_mode);
 		response.getBody()->setReportPlatformModeRec(comp);
 		sendJausMessage(response, sender);
 	}
 	else if	(strcmp(arg0.c_str(),"ReportSupportedPlatformModes") == 0)
 	{
-		comps.setPlatformMode(platform_mode);
-		responses.getBody()->getSupportedPlatformModesList()->addElement(comps);
+		ReportSupportedPlatformModes responses;
+		for (unsigned int i = 0; i < p_supported_modes.size(); i++) {
+			ReportSupportedPlatformModes::Body::SupportedPlatformModesList::PlatformModeRec comps;
+			comps.setPlatformMode(p_supported_modes[i]);
+			responses.getBody()->getSupportedPlatformModesList()->addElement(comps);
+		}
 		sendJausMessage(responses, sender);
 	}
 }
@@ -101,6 +121,9 @@ void PlatformMode_ReceiveFSM::SendAction(std::string arg0, Receive::Body::Receiv
 void PlatformMode_ReceiveFSM::SetPlatformModeAction(SetPlatformMode msg,Receive::Body::ReceiveRec transportData)
 {
 	platform_mode =  msg.getBody()->getPlatformModeRec()->getPlatformMode();
+	std_msgs::UInt8 rosmsg;
+	rosmsg.data = platform_mode;
+	p_pub_mode.publish(rosmsg);
 }
 
 bool PlatformMode_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec transportData)
