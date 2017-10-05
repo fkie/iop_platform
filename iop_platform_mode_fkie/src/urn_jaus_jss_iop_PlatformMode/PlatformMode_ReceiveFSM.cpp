@@ -21,6 +21,7 @@ along with this program; or you can read the full license at
 /** \author Alexander Tiderko */
 
 #include "urn_jaus_jss_iop_PlatformMode/PlatformMode_ReceiveFSM.h"
+#include <iop_component_fkie/iop_config.h>
 
 #include <iostream>
 
@@ -46,7 +47,6 @@ PlatformMode_ReceiveFSM::PlatformMode_ReceiveFSM(urn_jaus_jss_core_Transport::Tr
 	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
 	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
-	p_pnh = ros::NodeHandle("~");
 	p_supported_modes.push_back(0);  // only Standard operation is supported by default
 	platform_mode = 0;
 }
@@ -67,21 +67,28 @@ void PlatformMode_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "PlatformMode_ReceiveFSM");
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "PlatformMode_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "PlatformMode_ReceiveFSM");
+	iop::Config cfg("~PlatformMode");
+	cfg.param("platform_mode", platform_mode, platform_mode, true, true, "", platform_mode_map());
+	cfg.param("supported_modes", p_supported_modes, p_supported_modes);
 
-	int platformmode;
-	p_pnh.param("platform_mode", platformmode, 0);
-	platform_mode = platformmode;
-	std::vector<double> multipliers;
-	p_pnh.param("supported_modes", p_supported_modes, p_supported_modes);
 	if (p_supported_modes.size() == 0) {
 		p_supported_modes.push_back(0);
 	}
-	p_pub_mode = p_pnh.advertise<std_msgs::UInt8>("platform_mode", 5, true);
+	p_pub_mode = cfg.advertise<std_msgs::UInt8>("platform_mode", 5, true);
 	std_msgs::UInt8 rosmsg;
 	rosmsg.data = platform_mode;
 	p_pub_mode.publish(rosmsg);
-	p_sub_mode = p_pnh.subscribe<std_msgs::UInt8>("set_platform_mode", 1, &PlatformMode_ReceiveFSM::pRosMode, this);
+	p_sub_mode = cfg.subscribe<std_msgs::UInt8>("set_platform_mode", 5, &PlatformMode_ReceiveFSM::pRosMode, this);
 
+}
+
+std::map<int, std::string> PlatformMode_ReceiveFSM::platform_mode_map()
+{
+	std::map<int, std::string> result;
+	result[0] = "Standard_Operating";
+	result[1] = "Training";
+	result[2] = "Maintenance";
+	return result;
 }
 
 void PlatformMode_ReceiveFSM::pRosMode(const std_msgs::UInt8::ConstPtr& msg)

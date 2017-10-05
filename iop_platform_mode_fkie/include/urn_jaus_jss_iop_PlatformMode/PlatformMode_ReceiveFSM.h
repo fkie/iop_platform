@@ -74,12 +74,12 @@ protected:
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
 
 	std::vector<int> p_supported_modes;
-	unsigned char platform_mode;
-	ros::NodeHandle p_pnh;
+	int platform_mode;
 	ros::Publisher p_pub_mode;
 	ros::Subscriber p_sub_mode;
 
 	void pRosMode(const std_msgs::UInt8::ConstPtr& msg);
+	std::map<int, std::string> platform_mode_map();
 
 };
 

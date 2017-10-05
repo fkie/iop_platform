@@ -87,7 +87,6 @@ protected:
 	boost::function<void (std::vector<digital_resource_endpoint::DigitalResourceEndpoint>, JausAddress &)> class_discovery_callback_;
 	bool p_enable_ros_interface;
 	ros::NodeHandle p_nh;
-	ros::NodeHandle p_pnh;
 	ros::Publisher p_pub_endoints;
 	ros::ServiceServer p_srv_update_endpoints;
 

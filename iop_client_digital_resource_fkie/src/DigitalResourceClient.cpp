@@ -23,6 +23,7 @@ along with this program; or you can read the full license at
 
 #include "DigitalResourceClient.h"
 #include <iop_ocu_slavelib_fkie/Slave.h>
+#include <iop_component_fkie/iop_config.h>
 
 
 using namespace iop;
@@ -52,7 +53,8 @@ void DigitalResourceClient::run()
 {
 
 	/// Perform any entry actions specified by the start state.
-	p_pub_endoints = p_nh.advertise<iop_msgs_fkie::DigitalResourceEndpoints>("digital_endpoints", 10, true);
+	iop::Config cfg("~DigitalResourceClient");
+	p_pub_endoints = cfg.advertise<iop_msgs_fkie::DigitalResourceEndpoints>("digital_endpoints", 10, true);
 	pDigitalResourceDiscoveryClientService->pDigitalResourceDiscoveryClient_ReceiveFSM->set_discovery_handler(&DigitalResourceClient::p_discovered_endpoints, this);
 	ocu::Slave &slave = ocu::Slave::get_instance(*(jausRouter->getJausAddress()));
 	slave.add_supported_service(*this, "urn:jaus:jss:iop:DigitalResourceDiscovery", 1, 0);
@@ -96,7 +98,7 @@ void DigitalResourceClient::create_events(std::string service_uri, JausAddress c
 {
 	ROS_INFO_NAMED("DigitalResourceClient", "create QUERY timer to update endpoints from %d.%d.%d",
 			component.getSubsystemID(), component.getNodeID(), component.getComponentID());
-	p_query_timer = p_nh.createTimer(ros::Duration(3), &DigitalResourceClient::pQueryCallback, this);
+	p_query_timer = p_nh.createTimer(ros::Duration(1), &DigitalResourceClient::pQueryCallback, this);
 }
 
 void DigitalResourceClient::cancel_events(std::string service_uri, JausAddress component, bool by_query)
@@ -107,8 +109,7 @@ void DigitalResourceClient::cancel_events(std::string service_uri, JausAddress c
 void DigitalResourceClient::pQueryCallback(const ros::TimerEvent& event)
 {
 	if (p_remote_addr.get() != 0) {
-		ROS_INFO_NAMED("DigitalResourceClient", "... update endpoints of %d.%d.%d",
-				p_remote_addr.getSubsystemID(), p_remote_addr.getNodeID(), p_remote_addr.getComponentID());
+		ROS_INFO_NAMED("DigitalResourceClient", "update endpoints for %s", p_remote_addr.str().c_str());
 		pDigitalResourceDiscoveryClientService->pDigitalResourceDiscoveryClient_ReceiveFSM->discoverEndpoints(p_remote_addr);
 	}
 }

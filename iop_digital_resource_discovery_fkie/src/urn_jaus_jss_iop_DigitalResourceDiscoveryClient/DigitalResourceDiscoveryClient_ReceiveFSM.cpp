@@ -49,7 +49,6 @@ DigitalResourceDiscoveryClient_ReceiveFSM::DigitalResourceDiscoveryClient_Receiv
 	this->pEventsClient_ReceiveFSM = pEventsClient_ReceiveFSM;
 	p_request_id = 0;
 	p_enable_ros_interface = false;
-	p_pnh = ros::NodeHandle("~");
 }
 
 
