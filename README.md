@@ -3,7 +3,7 @@ See [iop_core](https://github.com/fkie/iop_core/blob/master/README.md) for use i
 # Interfaces
 
 List of service plugins in this repository:
-```
+
 [iop_client_digital_resource_fkie: DigitalResourceClient](#iop_client_digital_resource_fkie-digitalresourceclient)  
 [iop_digital_resource_discovery_fkie: DigitalResourceDiscovery](#iop_digital_resource_discovery_fkie-digitalresourcediscovery)  
 [iop_digital_resource_discovery_fkie: DigitalResourceDiscoveryClient](#iop_digital_resource_discovery_fkie-digitalresourcediscoveryclient)  
@@ -11,7 +11,7 @@ List of service plugins in this repository:
 [iop_platform_mode_fkie: PlatformMode](#iop_platform_mode_fkie-platformmode)  
 [iop_platform_state_fkie: PlatformState](#iop_platform_state_fkie-platformstate)  
 [iop_platform_state_fkie: PlatformStateClient](#iop_platform_state_fkie-platformstateclient)  
-```
+
 
 ## iop_client_digital_resource_fkie: DigitalResourceClient
 
