@@ -28,9 +28,9 @@ catkin_package(
 ###########
 iop_code_generator(
   IDLS
-    urn.jaus.jss.core-v1.0/Events.xml
-    urn.jaus.jss.core-v1.0/EventsClient.xml
-    urn.jaus.jss.core-v1.0/Transport.xml
+    urn.jaus.jss.core-v1.1/Events.xml
+    urn.jaus.jss.core-v1.1/EventsClient.xml
+    urn.jaus.jss.core-v1.1/Transport.xml
     urn.jaus.jss.iop/DigitalResourceDiscovery_v1.xml
     urn.jaus.jss.iop/DigitalResourceDiscoveryClient_v1.xml
   OWN_IDLS

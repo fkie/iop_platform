@@ -78,7 +78,7 @@ void DigitalResourceDiscovery_ReceiveFSM::addAndConfirmDigitalResourceEndpointAc
   unsigned short int resource_id = regmsg->getDigitalResourceEndpointRec()->getResourceID();
   ROS_DEBUG_NAMED("DigitalResourceDiscovery", "addAndConfirmDigitalResourceEndpointAction %d.%d.%d, request_id: %d, server_type: %d, server_url: %s",
                   subsystem_id, node_id, component_id, request_id, server_type, server_url.c_str());
-  RegisterDigitalResourceEndpoint::Body::RegisterDigitalResourceSeq::DigitalResourceEndpointRec::IOP_ID *iop_id_rec = regmsg->getDigitalResourceEndpointRec()->getIOP_ID();
+  RegisterDigitalResourceEndpoint::Body::RegisterDigitalResourceSeq::DigitalResourceEndpointRec::JAUS_ID *iop_id_rec = regmsg->getDigitalResourceEndpointRec()->getJAUS_ID();
   JausAddress iop_id(iop_id_rec->getSubsystemID(), iop_id_rec->getNodeID(), iop_id_rec->getComponentID());
   DigitalResourceEndpoint endpoint(server_type, server_url, iop_id, resource_id, request_id);
   unsigned char index_id = pGetEndpointById(iop_id, resource_id);
@@ -127,16 +127,16 @@ void DigitalResourceDiscovery_ReceiveFSM::reportDigitalResourceEndpointAction(Re
   ReportDigitalResourceEndpoint response;
   std::map<unsigned char, DigitalResourceEndpoint>::iterator it;
   for (it = p_known_endpoints.begin(); it != p_known_endpoints.end(); it++) {
-    ReportDigitalResourceEndpoint::Body::ReportFileTransferEndpointList::DigitalResourceEndpointRec rpoint;
+    ReportDigitalResourceEndpoint::Body::DigitalResourceEndpointList::DigitalResourceEndpointRec rpoint;
     rpoint.setServerType(it->second.server_type);
     rpoint.setServerURL(it->second.server_url);
     rpoint.setResourceID(it->second.resource_id);
-    ReportDigitalResourceEndpoint::Body::ReportFileTransferEndpointList::DigitalResourceEndpointRec::IOP_ID iop_id_rec;
+    ReportDigitalResourceEndpoint::Body::DigitalResourceEndpointList::DigitalResourceEndpointRec::JAUS_ID iop_id_rec;
     iop_id_rec.setSubsystemID(it->second.iop_id.getSubsystemID());
     iop_id_rec.setNodeID(it->second.iop_id.getNodeID());
     iop_id_rec.setComponentID(it->second.iop_id.getComponentID());
-    rpoint.setIOP_ID(iop_id_rec);
-    response.getBody()->getReportFileTransferEndpointList()->addElement(rpoint);
+    rpoint.setJAUS_ID(iop_id_rec);
+    response.getBody()->getDigitalResourceEndpointList()->addElement(rpoint);
   }
   sendJausMessage( response, sender );
 }

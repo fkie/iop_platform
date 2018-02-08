@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
 iop_init(COMPONENT_ID 0)
 iop_export_service(
     urn_jaus_jss_exp_aeodrs_HealthMonitor
-    urn_jaus_jss_exp_aeodrs_HealthMonitorClient
 )
 
 ###################################
@@ -27,13 +26,12 @@ catkin_package(
 ###########
 iop_code_generator(
   IDLS
-    urn.jaus.jss.core-v1.0/Events.xml
-    urn.jaus.jss.core-v1.0/EventsClient.xml
-    urn.jaus.jss.core-v1.0/Transport.xml
-    urn.jaus.jss.core-v1.0/AccessControl.xml
-    urn.jaus.jss.core-v1.0/AccessControlClient.xml
-    urn.jaus.jss.iop/HealthMonitor_V1.xml
-    urn.jaus.jss.iop/HealthMonitorClient_V1.xml
+    urn.jaus.jss.core-v1.1/Events.xml
+    urn.jaus.jss.core-v1.1/EventsClient.xml
+    urn.jaus.jss.core-v1.1/Transport.xml
+    urn.jaus.jss.core-v1.1/AccessControl.xml
+    urn.jaus.jss.core-v1.1/AccessControlClient.xml
+    urn.jaus.jss.iop/HealthMonitor_V1.4.xml
   OWN_IDLS
   OVERRIDES
     include/urn_jaus_jss_exp_aeodrs_HealthMonitor/HealthMonitor_ReceiveFSM.h

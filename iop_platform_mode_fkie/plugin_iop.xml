@@ -4,7 +4,7 @@
       PlatformMode Service Plugin
     </description>
     <iop_service name="PlatformMode" id="urn:jaus:jss:iop:PlatformMode" version="1.1">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.0"/>
+      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
     </iop_service>
   </class>
 </library>

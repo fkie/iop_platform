@@ -24,10 +24,10 @@ catkin_package(
 ###########
 iop_code_generator(
   IDLS
-  urn.jaus.jss.core-v1.0/AccessControl.xml
-    urn.jaus.jss.core-v1.0/Events.xml
+    urn.jaus.jss.core-v1.1/AccessControl.xml
+    urn.jaus.jss.core-v1.1/Events.xml
+    urn.jaus.jss.core-v1.1/Transport.xml
     urn.jaus.jss.iop/PlatformMode_V1.xml
-    urn.jaus.jss.core-v1.0/Transport.xml
     
   OWN_IDLS
   OVERRIDES

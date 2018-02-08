@@ -3,8 +3,8 @@
     <description>
       IOP HealthMonitor Service Plugin
     </description>
-    <iop_service name="HealthMonitor" id="urn:jaus:jss:exp:aeodrs:HealthMonitor" version="1.2">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.0"/>
+    <iop_service name="HealthMonitor" id="urn:jaus:jss:exp:aeodrs:HealthMonitor" version="1.4">
+      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
     </iop_service>
   </class>
 </library>

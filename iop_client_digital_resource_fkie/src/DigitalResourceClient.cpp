@@ -57,7 +57,7 @@ void DigitalResourceClient::run()
 	p_pub_endoints = cfg.advertise<iop_msgs_fkie::DigitalResourceEndpoints>("digital_endpoints", 10, true);
 	pDigitalResourceDiscoveryClientService->pDigitalResourceDiscoveryClient_ReceiveFSM->set_discovery_handler(&DigitalResourceClient::p_discovered_endpoints, this);
 	ocu::Slave &slave = ocu::Slave::get_instance(*(jausRouter->getJausAddress()));
-	slave.add_supported_service(*this, "urn:jaus:jss:iop:DigitalResourceDiscovery", 1, 0);
+	slave.add_supported_service(*this, "urn:jaus:jss:iop:DigitalResourceDiscovery", 1, 255);
 
 	/// Kick-off the receive loop...
 	EventReceiver::run();

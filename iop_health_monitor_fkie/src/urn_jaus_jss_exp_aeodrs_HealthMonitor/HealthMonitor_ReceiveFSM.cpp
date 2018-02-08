@@ -68,7 +68,7 @@ void HealthMonitor_ReceiveFSM::setupNotifications()
 
 }
 
-void HealthMonitor_ReceiveFSM::SendAction(std::string arg0, Receive::Body::ReceiveRec transportData)
+void HealthMonitor_ReceiveFSM::sendReportUGVSummaryAction(QueryUGVSummary msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
 	uint16_t subsystem_id = transportData.getSrcSubsystemID();
@@ -82,7 +82,7 @@ void HealthMonitor_ReceiveFSM::SendAction(std::string arg0, Receive::Body::Recei
 	sendJausMessage( report, sender );
 }
 
-void HealthMonitor_ReceiveFSM::updateUGVSummaryAction()
+void HealthMonitor_ReceiveFSM::updateUGVSummaryAction(UpdateUGVSummary msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
 	ROS_WARN("HealthMonitor: updateUGVSummaryAction not implemented!");

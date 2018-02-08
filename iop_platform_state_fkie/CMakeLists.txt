@@ -27,18 +27,17 @@ catkin_package(
 ###########
 iop_code_generator(
   IDLS
-    urn.jaus.jss.core-v1.0/Events.xml
-    urn.jaus.jss.core-v1.0/EventsClient.xml
-    urn.jaus.jss.core-v1.0/Transport.xml
-    urn.jaus.jss.core-v1.0/AccessControl.xml
-    urn.jaus.jss.core-v1.0/AccessControlClient.xml
+    urn.jaus.jss.core-v1.1/Events.xml
+    urn.jaus.jss.core-v1.1/EventsClient.xml
+    urn.jaus.jss.core-v1.1/Transport.xml
+    urn.jaus.jss.core-v1.1/AccessControl.xml
+    urn.jaus.jss.core-v1.1/AccessControlClient.xml
     urn.jaus.jss.iop/PlatformState_V1.xml
     urn.jaus.jss.iop/PlatformStateClient_V1.xml
   OWN_IDLS
   OVERRIDES
     include/urn_jaus_jss_iop_PlatformState/PlatformState_ReceiveFSM.h
     include/urn_jaus_jss_iop_PlatformStateClient/PlatformStateClient_ReceiveFSM.h
-    src/urn_jaus_jss_iop_PlatformState/PlatformState_PlatformStateFSM.cpp
     src/urn_jaus_jss_iop_PlatformState/PlatformState_ReceiveFSM.cpp
     src/urn_jaus_jss_iop_PlatformStateClient/PlatformStateClient_ReceiveFSM.cpp
     src/main.cpp

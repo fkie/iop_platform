@@ -124,15 +124,15 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::reportDigitalResourceEndpointAct
 	JausAddress sender(subsystem_id, node_id, component_id);
 	ROS_DEBUG_NAMED("DigitalResourceDiscoveryClient", "reportDigitalResourceEndpointAction from %d.%d.%d",
 			subsystem_id, node_id, component_id);
-	ReportDigitalResourceEndpoint::Body::ReportFileTransferEndpointList *endpoints = msg.getBody()->getReportFileTransferEndpointList();
+	ReportDigitalResourceEndpoint::Body::DigitalResourceEndpointList *endpoints = msg.getBody()->getDigitalResourceEndpointList();
 	std::vector<digital_resource_endpoint::DigitalResourceEndpoint> v_endpoints;
 	for (unsigned int ei = 0; ei < endpoints->getNumberOfElements(); ei++) {
 		DigitalResourceEndpoint endpoint;
-		ReportDigitalResourceEndpoint::Body::ReportFileTransferEndpointList::DigitalResourceEndpointRec *ep = endpoints->getElement(ei);
+		ReportDigitalResourceEndpoint::Body::DigitalResourceEndpointList::DigitalResourceEndpointRec *ep = endpoints->getElement(ei);
 		endpoint.server_url = ep->getServerURL();
 		endpoint.server_type = ep->getServerType();
 		endpoint.resource_id = ep->getResourceID();
-		endpoint.iop_id = JausAddress(ep->getIOP_ID()->getSubsystemID(), ep->getIOP_ID()->getNodeID(), ep->getIOP_ID()->getComponentID());
+		endpoint.iop_id = JausAddress(ep->getJAUS_ID()->getSubsystemID(), ep->getJAUS_ID()->getNodeID(), ep->getJAUS_ID()->getComponentID());
 		v_endpoints.push_back(endpoint);
 	}
 	iop_msgs_fkie::DigitalResourceEndpoints ros_msg;
@@ -170,11 +170,11 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::registerEndpoint(DigitalResource
 	digital_resource = msg.getBody()->getRegisterDigitalResourceSeq()->getDigitalResourceEndpointRec();
 	digital_resource->setServerType(endpoint.server_type);
 	digital_resource->setServerURL(endpoint.server_url);
-	RegisterDigitalResourceEndpoint::Body::RegisterDigitalResourceSeq::DigitalResourceEndpointRec::IOP_ID iop_id;
+	RegisterDigitalResourceEndpoint::Body::RegisterDigitalResourceSeq::DigitalResourceEndpointRec::JAUS_ID iop_id;
 	iop_id.setSubsystemID(endpoint.iop_id.getSubsystemID());
 	iop_id.setNodeID(endpoint.iop_id.getNodeID());
 	iop_id.setComponentID(endpoint.iop_id.getComponentID());
-	digital_resource->setIOP_ID(iop_id);
+	digital_resource->setJAUS_ID(iop_id);
 	digital_resource->setResourceID(endpoint.resource_id);
 	if (std::find(p_toregister_endpoints.begin(), p_toregister_endpoints.end(), endpoint) == p_toregister_endpoints.end()) {
 		p_toregister_endpoints.push_back(endpoint);

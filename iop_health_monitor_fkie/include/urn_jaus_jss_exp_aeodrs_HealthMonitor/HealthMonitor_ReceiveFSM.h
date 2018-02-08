@@ -54,8 +54,8 @@ public:
 	virtual void setupNotifications();
 
 	/// Action Methods
-	virtual void SendAction(std::string arg0, Receive::Body::ReceiveRec transportData);
-	virtual void updateUGVSummaryAction();
+	virtual void sendReportUGVSummaryAction(QueryUGVSummary msg, Receive::Body::ReceiveRec transportData);
+	virtual void updateUGVSummaryAction(UpdateUGVSummary msg, Receive::Body::ReceiveRec transportData);
 
 
 	/// Guard Methods

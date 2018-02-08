@@ -3,16 +3,16 @@
     <description>
       PlatformState Service Plugin
     </description>
-    <iop_service name="PlatformState" id="urn:jaus:jss:iop:PlatformState" version="1.0">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.0"/>
+    <iop_service name="PlatformState" id="urn:jaus:jss:iop:PlatformState" version="1.1">
+      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
     </iop_service>
   </class>
   <class name="urn:jaus:jss:iop:PlatformStateClient" type="iop::PlatformStateClientPlugin" base_class_type="iop::PluginInterface">
     <description>
       PlatformState client Service Plugin, used e.g. by OCU
     </description>
-    <iop_service name="PlatformStateClient" id="urn:jaus:jss:iop:PlatformStateClient" version="1.0">
-      <inherits_from id="urn:jaus:jss:core:AccessControlClient" min_version="1.0"/>
+    <iop_service name="PlatformStateClient" id="urn:jaus:jss:iop:PlatformStateClient" version="1.1">
+      <inherits_from id="urn:jaus:jss:core:AccessControlClient" min_version="1.1"/>
     </iop_service>
   </class>
 </library>
