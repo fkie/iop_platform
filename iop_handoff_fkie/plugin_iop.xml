@@ -1,0 +1,19 @@
+<library path="libiop_handoff_fkie">
+  <class name="HandoffController" type="iop::HandoffControllerPlugin" base_class_type="iop::PluginInterface">
+    <description>
+      HandoffController Service Plugin
+    </description>
+    <iop_service name="HandoffController" id="urn:jaus:jss:iop:HandoffController" version="1.1">
+      <inherits_from id="urn:jaus:jss:core:EventsClient" min_version="1.1"/>
+      <depend id="urn:jaus:jss:core:AccessControlClient"/>
+    </iop_service>
+  </class>
+  <class name="EnhancedAccessControl" type="iop::EnhancedAccessControlPlugin" base_class_type="iop::PluginInterface">
+    <description>
+      EnhancedAccessControl Service Plugin
+    </description>
+    <iop_service name="EnhancedAccessControl" id="urn:jaus:jss:iop:EnhancedAccessControl" version="1.1">
+      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
+    </iop_service>
+  </class>
+</library>
