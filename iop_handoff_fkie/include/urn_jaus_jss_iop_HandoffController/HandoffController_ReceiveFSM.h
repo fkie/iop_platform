@@ -68,6 +68,7 @@ protected:
 	ros::Publisher p_pub_handoff_request;
 	std::vector<JausAddress> p_rejected_addresses;
 	std::vector<JausAddress> p_in_request;
+	std::vector<JausAddress> p_remote_requests;
 	/// Clients must re-request handoff to prevent being denied handoff request when the timeout expires. A value of zero indicates this feature is disabled.
 	unsigned char p_enhanced_timeout;
 	bool p_auto_request;
@@ -83,6 +84,21 @@ protected:
 	std::string p_code2str(unsigned char code);
 	void p_timeout(const ros::TimerEvent& event);
 	void p_update_handoff_requests();
+
+	template<class T>
+	void p_checked_add(std::vector<T> &list, T &item) {
+		typename std::vector<T>::iterator it = std::find(list.begin(), list.end(), item);
+		if (it == list.end()) {
+			list.push_back(item);
+		}
+	}
+	template<class T>
+	void p_checked_remove(std::vector<T> &list, T &item) {
+		typename std::vector<T>::iterator it = std::find(list.begin(), list.end(), item);
+		if (it != list.end()) {
+			list.erase(it);
+		}
+	}
 };
 
 };
