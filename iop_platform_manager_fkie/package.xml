@@ -17,4 +17,5 @@
   <run_depend>iop_management_fkie</run_depend>
   <run_depend>iop_platform_mode_fkie</run_depend>
   <run_depend>iop_platform_state_fkie</run_depend>
+  <run_depend>iop_unsolicited_heartbeat_fkie</run_depend>
 </package>

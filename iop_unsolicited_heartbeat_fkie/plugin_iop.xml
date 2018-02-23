@@ -1,0 +1,10 @@
+<library path="libiop_unsolicited_heartbeat_fkie">
+  <class name="UnsolicitedHeartbeat" type="iop::UnsolicitedHeartbeatPlugin" base_class_type="iop::PluginInterface">
+    <description>
+      UnsolicitedHeartbeat Service Plugin
+    </description>
+    <iop_service name="UnsolicitedHeartbeat" id="urn:jaus:jss:iop:UnsolicitedHeartbeat" version="1.1">
+      <inherits_from id="urn:jaus:jss:core:Liveness" min_version="1.1"/>
+    </iop_service>
+  </class>
+</library>

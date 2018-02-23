@@ -11,6 +11,7 @@ List of service plugins in this repository:
 [iop_platform_mode_fkie: PlatformMode](#iop_platform_mode_fkie-platformmode)  
 [iop_platform_state_fkie: PlatformState](#iop_platform_state_fkie-platformstate)  
 [iop_platform_state_fkie: PlatformStateClient](#iop_platform_state_fkie-platformstateclient)  
+[iop_unsolicited_heartbeat_fkie: UnsolicitedHeartbeat](#iop_unsolicited_heartbeat_fkie-unsolicitedheartbeat)  
 
 
 ## iop_client_digital_resource_fkie: DigitalResourceClient
@@ -143,5 +144,23 @@ This service can be used by other service to query or set the state of the platf
 
 > None
 
+
+## iop_unsolicited_heartbeat_fkie: UnsolicitedHeartbeat
+
+Automatically generate periodic Report Heartbeat Pulse messages.
+
+#### Parameter:
+
+_hz (double_ Default: 1.0)
+
+> Specifies the rate at which the nsolicited Report Heartbeat Pulse message is send, in Hertz. 0 disables the send.
+
+#### Publisher:
+
+> None
+
+#### Subscriber:
+
+> None
 
 
