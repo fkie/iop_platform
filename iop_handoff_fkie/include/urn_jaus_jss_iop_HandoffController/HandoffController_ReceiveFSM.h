@@ -18,6 +18,8 @@
 #include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 #include <urn_jaus_jss_core_AccessControlClient/AccessControlClientService.h>
 
+
+#include <boost/thread/recursive_mutex.hpp>
 #include <ros/ros.h>
 #include <iop_msgs_fkie/HandoffRequest.h>
 #include <iop_msgs_fkie/HandoffResponse.h>

@@ -6,6 +6,7 @@ project(iop_platform_state_fkie)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
                     iop_accesscontrol_fkie
+                    iop_ocu_slavelib_fkie
                     roscpp)
 iop_init(COMPONENT_ID 0)
 iop_export_service(
@@ -20,6 +21,7 @@ catkin_package(
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         iop_accesscontrol_fkie
+        iop_ocu_slavelib_fkie
 )
 
 ###########

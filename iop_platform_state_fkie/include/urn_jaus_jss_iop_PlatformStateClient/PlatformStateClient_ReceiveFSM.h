@@ -40,24 +40,32 @@ along with this program; or you can read the full license at
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+#include <std_msgs/UInt8.h>
+#include <iop_ocu_slavelib_fkie/SlaveHandlerInterface.h>
+#include <iop_events_fkie/EventHandlerInterface.h>
 
 #include "PlatformStateClient_ReceiveFSM_sm.h"
 
 namespace urn_jaus_jss_iop_PlatformStateClient
 {
 
-class DllExport PlatformStateClient_ReceiveFSM : public JTS::StateMachine
+const int INITIALIZE = 0;
+const int OPERATIONAL = 1;
+const int SHUTDOWN = 2;
+const int SYSTEM_ABORT = 3;
+const int EMERGENCY = 4;
+const int RENDER_USELESS = 5;
+const int PLATFORM_STATE_UNKNOWN = 255;
+
+const int TRANSITIONING = 0;
+const int INVALID_STATE = 1;
+
+class DllExport PlatformStateClient_ReceiveFSM : public JTS::StateMachine, public iop::ocu::SlaveHandlerInterface, public iop::EventHandlerInterface
 {
 public:
-	static unsigned char PLATFORM_STATE_INIT;
-	static unsigned char PLATFORM_STATE_OPERATIONAL;
-	static unsigned char PLATFORM_STATE_SHUTDOWN;
-	static unsigned char PLATFORM_STATE_SYSTEM_ABORT;
-	static unsigned char PLATFORM_STATE_EMERGENCY;
-	static unsigned char PLATFORM_STATE_RENDER_USELESS;
-	static unsigned char PLATFORM_STATE_UNKNOWN;
-
 	PlatformStateClient_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM);
 	virtual ~PlatformStateClient_ReceiveFSM();
 
@@ -87,6 +95,15 @@ public:
 
 	/// Guard Methods
 
+	/// EventHandlerInterface Methods
+	void event(JausAddress reporter, unsigned short query_msg_id, unsigned int reportlen, const unsigned char* reportdata);
+
+	/// SlaveHandlerInterface Methods
+	void control_allowed(std::string service_uri, JausAddress component, unsigned char authority);
+	void enable_monitoring_only(std::string service_uri, JausAddress component);
+	void access_deactivated(std::string service_uri, JausAddress component);
+	void create_events(std::string service_uri, JausAddress component, bool by_query=false);
+	void cancel_events(std::string service_uri, JausAddress component, bool by_query=false);
 
 
 	PlatformStateClient_ReceiveFSMContext *context;
@@ -100,7 +117,26 @@ protected:
 
 	boost::function<void (JausAddress &, unsigned char state)> p_class_interface_callback;
 
-	unsigned char p_state;
+	ros::NodeHandle p_nh;
+	ros::Timer p_query_timer;
+	ros::Subscriber p_sub_state;
+	ros::Subscriber p_sub_state_str;
+	ros::Publisher p_pub_state;
+	ros::Publisher p_pub_state_str;
+	int p_state;
+	double p_hz;
+	bool p_has_access;
+
+	JausAddress p_remote_addr;
+	QueryPlatformState p_query_platform_state_msg;
+
+
+	void pRosNewCmdState(const std_msgs::UInt8::ConstPtr& msg);
+	void pRosNewCmdStateStr(const std_msgs::String::ConstPtr& msg);
+	void pQueryCallback(const ros::TimerEvent& event);
+	void p_publish_state(int state);
+	std::string p_state2str(int state);
+	int p_state2int(std::string state);
 };
 
 };

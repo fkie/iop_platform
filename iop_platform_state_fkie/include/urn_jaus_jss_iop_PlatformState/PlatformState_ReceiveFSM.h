@@ -37,16 +37,32 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 #include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
+#include <urn_jaus_jss_core_Discovery/DiscoveryService.h>
 
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+#include <std_msgs/UInt8.h>
 
 #include "PlatformState_ReceiveFSM_sm.h"
 
 namespace urn_jaus_jss_iop_PlatformState
 {
 
+const int INITIALIZE = 0;
+const int OPERATIONAL = 1;
+const int SHUTDOWN = 2;
+const int SYSTEM_ABORT = 3;
+const int EMERGENCY = 4;
+const int RENDER_USELESS = 5;
+
+const int TRANSITIONING = 0;
+const int INVALID_STATE = 1;
+
+
 class DllExport PlatformState_ReceiveFSM : public JTS::StateMachine
 {
 public:
+
 	PlatformState_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM);
 	virtual ~PlatformState_ReceiveFSM();
 
@@ -65,6 +81,7 @@ public:
 
 	/// Guard Methods
 	virtual bool isControllingClient(Receive::Body::ReceiveRec transportData);
+	virtual bool isIDStored(Receive::Body::ReceiveRec transportData);
 	virtual bool setToEmergency(SetPlatformState msg);
 	virtual bool setToInitialize(SetPlatformState msg);
 	virtual bool setToOperational(SetPlatformState msg);
@@ -81,9 +98,29 @@ protected:
 	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
 	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+	urn_jaus_jss_core_Discovery::Discovery_ReceiveFSM *p_discovery_srv;
+	JausAddress p_own_address;
 
+	ReportPlatformState p_current_state;
 	JausAddress p_requestor;
+	ros::Subscriber p_sub_state;
+	ros::Subscriber p_sub_state_str;
+	ros::Publisher p_pub_state;
+	ros::Publisher p_pub_state_str;
+	int p_init_platform_state;
+	std::vector<std::string> p_supported_states;
 
+
+	urn_jaus_jss_core_Discovery::Discovery_ReceiveFSM* p_get_discovery();
+	void pRosNewState(const std_msgs::UInt8::ConstPtr& msg);
+	void pRosNewStateStr(const std_msgs::String::ConstPtr& msg);
+
+	int p_publish_state(int state);
+	int p_get_current_state();
+	std::string p_get_current_state_str();
+	std::string p_state2str(int state);
+	int p_state2int(std::string state);
+	bool p_is_supported_state(int state);
 };
 
 };

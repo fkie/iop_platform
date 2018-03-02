@@ -18,7 +18,6 @@
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
 
 #include <iop_handoff_fkie/InternalHandoffRequestList.h>
-#include <boost/thread/recursive_mutex.hpp>
 #include <ros/ros.h>
 
 #include "EnhancedAccessControl_ReceiveFSM_sm.h"
