@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
   <name>iop_handoff_fkie</name>
-  <version>0.1.0</version>
-  <description>Experimental HandoffController and EnhancedAccessControl service for
+  <version>1.0.0</version>
+  <description>HandoffController and EnhancedAccessControl service for
     a controlled change the access control from one OCU to another. </description>
 
   <maintainer email="alexander.tiderko@fkie.fraunhofer.de">Alexander Tiderko</maintainer>
