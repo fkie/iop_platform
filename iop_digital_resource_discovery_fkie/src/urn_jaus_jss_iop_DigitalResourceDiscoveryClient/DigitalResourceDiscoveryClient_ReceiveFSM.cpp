@@ -156,10 +156,10 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::reportDigitalResourceEndpointAct
 
 void DigitalResourceDiscoveryClient_ReceiveFSM::registerEndpoint(DigitalResourceEndpoint endpoint, const JausAddress digital_resource_discovery_service)
 {
-	if (pHasEndpoint(endpoint)) {
-		ROS_WARN_NAMED("DigitalResourceDiscoveryClient", "endpoint %s already registered, skip registration", endpoint.server_url.c_str());
-		return;
-	}
+//	if (pHasEndpoint(endpoint)) {
+//		ROS_WARN_NAMED("DigitalResourceDiscoveryClient", "endpoint %s already registered, skip registration", endpoint.server_url.c_str());
+//		return;
+//	}
 	ROS_INFO_NAMED("DigitalResourceDiscoveryClient", "register endpoint: %s", endpoint.server_url.c_str());
 	// register the digital video endpoint by DigitalResourceDiscovery service
 	RegisterDigitalResourceEndpoint msg;
