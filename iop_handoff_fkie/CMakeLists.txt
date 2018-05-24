@@ -10,6 +10,7 @@ project(iop_handoff_fkie)
 find_package(catkin REQUIRED COMPONENTS
   iop_accesscontrol_fkie
   iop_msgs_fkie
+  iop_ocu_slavelib_fkie
 )
 
 iop_init(COMPONENT_ID 0)
@@ -20,7 +21,7 @@ iop_init(COMPONENT_ID 0)
 catkin_package(
     INCLUDE_DIRS include/public
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS iop_accesscontrol_fkie iop_msgs_fkie
+    CATKIN_DEPENDS iop_accesscontrol_fkie iop_msgs_fkie iop_ocu_slavelib_fkie
 )
 
 iop_code_generator(

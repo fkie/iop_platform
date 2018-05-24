@@ -3,8 +3,7 @@
 #include "urn_jaus_jss_iop_HandoffController/HandoffController_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControlClient/AccessControlClient_ReceiveFSM.h"
 #include <iop_component_fkie/iop_component.h>
-
-
+#include <iop_ocu_slavelib_fkie/Slave.h>
 
 
 using namespace JTS;
@@ -61,6 +60,8 @@ void HandoffController_ReceiveFSM::setupNotifications()
 	p_pub_handoff_request = cfg.advertise<iop_msgs_fkie::HandoffRequest>("handoff_remote_request", 10);
 	p_sub_handoff_request = cfg.subscribe("handoff_own_request", 10, &HandoffController_ReceiveFSM::p_ros_handoff_request, this);
 	p_sub_handoff_response = cfg.subscribe("handoff_own_response", 10, &HandoffController_ReceiveFSM::p_ros_handoff_response, this);
+	iop::ocu::Slave &slave = iop::ocu::Slave::get_instance(*(jausRouter->getJausAddress()));
+	slave.set_supported_handoff(true);
 	p_subscribe_accesscontrolclient();
 	if (p_auto_request && p_enhanced_timeout > 0) {
 		p_timeout_timer = p_nh.createTimer(ros::Duration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this);
