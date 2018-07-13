@@ -74,7 +74,8 @@ protected:
 	bool pHasEndpoint(digital_resource_endpoint::DigitalResourceEndpoint endpoint);
 	unsigned char pGetFreeID();
 	unsigned char pGetEndpointById(JausAddress iop_id, unsigned short int resource_id);
-
+	double p_delay_first_response;
+	double p_start_time;
 };
 
 };
