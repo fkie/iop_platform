@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>fkie_iop_platform_manager</name>
+  <version>1.0.0</version>
+  <description>The meta package which combines services to create a main platform with discovering services.</description>
+
+  <maintainer email="alexander.tiderko@fkie.fraunhofer.de">Alexander Tiderko</maintainer>
+  <license>GPLv2</license>
+  <url type="website">https://github.com/fkie/iop_platform</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>fkie_iop_builder</run_depend>
+  <run_depend>fkie_iop_digital_resource_discovery</run_depend>
+  <run_depend>fkie_iop_discovery</run_depend>
+  <run_depend>fkie_iop_health_monitor</run_depend>
+  <run_depend>fkie_iop_liveness</run_depend>
+  <run_depend>fkie_iop_management</run_depend>
+  <run_depend>fkie_iop_platform_mode</run_depend>
+  <run_depend>fkie_iop_platform_state</run_depend>
+  <run_depend>fkie_iop_unsolicited_heartbeat</run_depend>
+</package>

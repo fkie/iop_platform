@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>fkie_iop_handoff</name>
+  <version>1.0.0</version>
+  <description>HandoffController and EnhancedAccessControl service for
+    a controlled change the access control from one OCU to another. </description>
+
+  <maintainer email="alexander.tiderko@fkie.fraunhofer.de">Alexander Tiderko</maintainer>
+  <license>GPLv2</license>
+  <url type="website">https://github.com/fkie/iop_platform</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>fkie_iop_accesscontrol</build_depend>
+  <build_depend>fkie_iop_msgs</build_depend>
+  <build_depend>fkie_iop_ocu_slavelib</build_depend>
+  <run_depend>fkie_iop_accesscontrol</run_depend>
+  <run_depend>fkie_iop_component</run_depend>
+  <run_depend>fkie_iop_msgs</run_depend>
+  <run_depend>fkie_iop_ocu_slavelib</run_depend>
+
+  <export>
+    <fkie_iop_component plugin="${prefix}/plugin_iop.xml" />
+  </export>
+
+</package>
