@@ -9,17 +9,12 @@
         <param name="capability_group" value="iop_bridge"/>
         <rosparam param="services">
           [
-            fkie_iop_digital_resource_discovery: "urn:jaus:jss:iop:DigitalResourceDiscovery_1_0",
-            fkie_iop_health_monitor: "urn:jaus:jss:exp:aeodrs:HealthMonitor_1_2",
-            fkie_iop_platform_mode: "urn:jaus:jss:iop:PlatformMode_1_1",
-            fkie_iop_platform_state: "urn:jaus:jss:iop:PlatformState_1_0",
-            iop_discovery_1_0_fkie: "urn:jaus:jss:core:Discovery_1_0",
-            iop_discovery_1_0_fkie: "urn:jaus:jss:core:DiscoveryClient_1_0",
-            iop_management_1_0_fkie: "urn:jaus:jss:core:Management_1_0",
-            iop_accesscontrol_1_0_fkie: "urn:jaus:jss:core:AccessControl_1_0",
-            iop_events_1_0_fkie: "urn:jaus:jss:core:Events_1_0",
-            iop_events_1_0_fkie: "urn:jaus:jss:core:EventsClient_1_0",
-            iop_transport_1_0_fkie: "urn:jaus:jss:core:Transport_1_0",
+            fkie_iop_digital_resource_discovery: "urn:jaus:jss:iop:DigitalResourceDiscovery",
+            fkie_iop_health_monitor: "urn:jaus:jss:exp:aeodrs:HealthMonitor",
+            fkie_iop_platform_mode: "urn:jaus:jss:iop:PlatformMode",
+            fkie_iop_platform_state: "urn:jaus:jss:iop:PlatformState",
+            fkie_iop_discovery: "urn:jaus:jss:core:Discovery",
+            fkie_iop_discovery: "urn:jaus:jss:core:DiscoveryClient",
           ]
         </rosparam>
         <param name="iop_address" value="$(arg id_subsystem).$(arg id_node).15"/>
