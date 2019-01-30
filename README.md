@@ -8,13 +8,13 @@ Build status of latest version:
 
 List of service plugins in this repository:
 
-[iop_client_digital_resource_fkie: DigitalResourceClient](iop_client_digital_resource_fkie/README.md)  
-[iop_digital_resource_discovery_fkie: DigitalResourceDiscovery](iop_digital_resource_discovery_fkie/README.md)  
-[iop_digital_resource_discovery_fkie: DigitalResourceDiscoveryClient](iop_digital_resource_discovery_fkie/README.md#iop_digital_resource_discovery_fkie-digitalresourcediscoveryclient)  
-[iop_handoff_fkie: HandoffController](iop_handoff_fkie/README.md)  
-[iop_handoff_fkie: EnhancedAccessControl](iop_handoff_fkie/README.md#iop_handoff_fkie-enhancedaccesscontrol)  
-[iop_health_monitor_fkie: HealthMonitor](iop_health_monitor_fkie/README.md)  
-[iop_platform_mode_fkie: PlatformMode](iop_platform_mode_fkie/README.md)  
-[iop_platform_state_fkie: PlatformState](iop_platform_state_fkie/README.md)  
-[iop_platform_state_fkie: PlatformStateClient](iop_platform_state_fkie/README.md#iop_platform_state_fkie-platformstateclient)  
-[iop_unsolicited_heartbeat_fkie: UnsolicitedHeartbeat](iop_unsolicited_heartbeat_fkie/README.md)  
+[fkie_iop_client_digital_resource: DigitalResourceClient](fkie_iop_client_digital_resource/README.md)  
+[fkie_iop_digital_resource_discovery: DigitalResourceDiscovery](fkie_iop_digital_resource_discovery/README.md)  
+[fkie_iop_digital_resource_discovery: DigitalResourceDiscoveryClient](fkie_iop_digital_resource_discovery/README.md#fkie_iop_digital_resource_discovery-digitalresourcediscoveryclient)  
+[fkie_iop_handoff: HandoffController](fkie_iop_handoff/README.md)  
+[fkie_iop_handoff: EnhancedAccessControl](fkie_iop_handoff/README.md#fkie_iop_handoff-enhancedaccesscontrol)  
+[fkie_iop_health_monitor: HealthMonitor](fkie_iop_health_monitor/README.md)  
+[fkie_iop_platform_mode: PlatformMode](fkie_iop_platform_mode/README.md)  
+[fkie_iop_platform_state: PlatformState](fkie_iop_platform_state/README.md)  
+[fkie_iop_platform_state: PlatformStateClient](fkie_iop_platform_state/README.md#fkie_iop_platform_state-platformstateclient)  
+[fkie_iop_unsolicited_heartbeat: UnsolicitedHeartbeat](fkie_iop_unsolicited_heartbeat/README.md)  
