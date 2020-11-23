@@ -8,7 +8,8 @@ project(fkie_iop_unsolicited_heartbeat)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  fkie_iop_liveness
+    fkie_iop_liveness
+    roscpp
 )
 
 iop_init(COMPONENT_ID 0)
@@ -19,7 +20,9 @@ iop_export_service(urn_jaus_jss_iop_UnsolicitedHeartbeat)
 ###################################
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS fkie_iop_liveness
+    CATKIN_DEPENDS
+        fkie_iop_liveness
+        roscpp
 )
 
 iop_code_generator(

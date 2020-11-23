@@ -21,6 +21,7 @@ catkin_package(
     CATKIN_DEPENDS
         fkie_iop_events
         fkie_iop_msgs
+        roscpp
 )
 
 ###########

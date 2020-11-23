@@ -21,7 +21,11 @@ iop_init(COMPONENT_ID 0)
 catkin_package(
     INCLUDE_DIRS include/public
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS fkie_iop_accesscontrol fkie_iop_msgs fkie_iop_ocu_slavelib
+    CATKIN_DEPENDS
+        fkie_iop_accesscontrol
+        fkie_iop_msgs
+        fkie_iop_ocu_slavelib
+        jaustoolset
 )
 
 iop_code_generator(

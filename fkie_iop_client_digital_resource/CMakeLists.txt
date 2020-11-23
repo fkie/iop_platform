@@ -28,6 +28,7 @@ catkin_package(
         fkie_iop_digital_resource_discovery
         fkie_iop_msgs
         fkie_iop_ocu_slavelib
+        roscpp
 )
 
 ###########

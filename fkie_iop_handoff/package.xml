@@ -17,6 +17,7 @@
   <run_depend>fkie_iop_component</run_depend>
   <run_depend>fkie_iop_msgs</run_depend>
   <run_depend>fkie_iop_ocu_slavelib</run_depend>
+  <run_depend>jaustoolset</run_depend>
 
   <export>
     <fkie_iop_component plugin="${prefix}/plugin_iop.xml" />
