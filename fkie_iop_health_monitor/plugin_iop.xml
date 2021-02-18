@@ -1,10 +1,5 @@
-<library path="libfkie_iop_health_monitor">
-  <class name="HealthMonitor" type="iop::HealthMonitorPlugin" base_class_type="iop::PluginInterface">
-    <description>
-      IOP HealthMonitor Service Plugin
-    </description>
-    <iop_service name="HealthMonitor" id="urn:jaus:jss:exp:aeodrs:HealthMonitor" version="1.4">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
-    </iop_service>
-  </class>
+<library path="fkie_iop_health_monitor">
+	<class name="HealthMonitor" type="urn_jaus_jss_exp_aeodrs_HealthMonitor::HealthMonitorService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:exp:aeodrs:HealthMonitor" version="1.4">
+	</class>
 </library>

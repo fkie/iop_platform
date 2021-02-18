@@ -34,11 +34,13 @@ along with this program; or you can read the full license at
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
 
-#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 #include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 
 
 #include "DigitalResourceDiscovery_ReceiveFSM_sm.h"
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
 #include <fkie_iop_digital_resource_discovery/DigitalResourceEndpoint.h>
 
 namespace urn_jaus_jss_iop_DigitalResourceDiscovery
@@ -47,11 +49,12 @@ namespace urn_jaus_jss_iop_DigitalResourceDiscovery
 class DllExport DigitalResourceDiscovery_ReceiveFSM : public JTS::StateMachine
 {
 public:
-	DigitalResourceDiscovery_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM);
+	DigitalResourceDiscovery_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
 	virtual ~DigitalResourceDiscovery_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
 	virtual void setupNotifications();
+	virtual void setupIopConfiguration();
 
 	/// Action Methods
 	virtual void addAndConfirmDigitalResourceEndpointAction(RegisterDigitalResourceEndpoint msg, Receive::Body::ReceiveRec transportData);
@@ -67,17 +70,20 @@ public:
 
 protected:
 
-    /// References to parent FSMs
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+	/// References to parent FSMs
 	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+
+	std::shared_ptr<iop::Component> cmp;
+	rclcpp::Logger logger;
 	std::map<unsigned char, digital_resource_endpoint::DigitalResourceEndpoint> p_known_endpoints;
 	bool pHasEndpoint(digital_resource_endpoint::DigitalResourceEndpoint endpoint);
 	unsigned char pGetFreeID();
 	unsigned char pGetEndpointById(JausAddress iop_id, unsigned short int resource_id);
-	double p_delay_first_response;
-	double p_start_time;
+	int64_t p_delay_first_response;
+	int64_t p_start_time;
 };
 
-};
+}
 
 #endif // DIGITALRESOURCEDISCOVERY_RECEIVEFSM_H

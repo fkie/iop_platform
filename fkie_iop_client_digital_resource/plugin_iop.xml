@@ -1,10 +1,4 @@
-<library path="libfkie_iop_client_digital_resource">
-  <class name="DigitalResourceClient" type="iop::DigitalResourceClientPlugin" base_class_type="iop::PluginInterface">
-    <description>
-      IOP DigitalResource client Service Plugin, e.g. for using in OCU
-    </description>
-    <iop_service name="DigitalResourceClient" id="urn:jaus:jss:iop:DigitalResourceClient" version="1.1">
-      <inherits_from id="urn:jaus:jss:iop:DigitalResourceDiscoveryClient" min_version="1.1"/>
-    </iop_service>
+<library path="fkie_iop_client_digital_resource">
+  <class name="DigitalResourceClient" type="iop::DigitalResourceClient" base_class_type="iop::PluginInterface">
   </class>
 </library>

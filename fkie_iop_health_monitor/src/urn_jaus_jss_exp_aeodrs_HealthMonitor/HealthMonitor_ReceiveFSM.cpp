@@ -22,8 +22,7 @@ along with this program; or you can read the full license at
 
 
 #include "urn_jaus_jss_exp_aeodrs_HealthMonitor/HealthMonitor_ReceiveFSM.h"
-
-
+//#include <fkie_iop_component/iop_config.hpp>
 
 
 using namespace JTS;
@@ -33,7 +32,8 @@ namespace urn_jaus_jss_exp_aeodrs_HealthMonitor
 
 
 
-HealthMonitor_ReceiveFSM::HealthMonitor_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
+HealthMonitor_ReceiveFSM::HealthMonitor_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("HealthMonitor"))
 {
 
 	/*
@@ -43,9 +43,10 @@ HealthMonitor_ReceiveFSM::HealthMonitor_ReceiveFSM(urn_jaus_jss_core_Transport::
 	 */
 	context = new HealthMonitor_ReceiveFSMContext(*this);
 
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->cmp = cmp;
 }
 
 
@@ -65,7 +66,12 @@ void HealthMonitor_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "HealthMonitor_ReceiveFSM");
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "HealthMonitor_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "HealthMonitor_ReceiveFSM");
+}
 
+
+void HealthMonitor_ReceiveFSM::setupIopConfiguration()
+{
+	// iop::Config cfg(cmp, "HealthMonitor");
 }
 
 void HealthMonitor_ReceiveFSM::sendReportUGVSummaryAction(QueryUGVSummary msg, Receive::Body::ReceiveRec transportData)
@@ -76,7 +82,7 @@ void HealthMonitor_ReceiveFSM::sendReportUGVSummaryAction(QueryUGVSummary msg, R
 	uint8_t component_id = transportData.getSrcComponentID();
 	JausAddress sender(subsystem_id, node_id, component_id);
 	std::string state_str("Operational");
-	ROS_DEBUG_NAMED("HealthMonitor", "sendReportUGVSummary to %d.%d.%d", subsystem_id, node_id, component_id);
+	RCLCPP_DEBUG(logger, "sendReportUGVSummary to %d.%d.%d", subsystem_id, node_id, component_id);
 	ReportUGVSummary report;
 	// TODO subscribe to /rosout and forward all errors warnings
 	sendJausMessage( report, sender );
@@ -85,7 +91,7 @@ void HealthMonitor_ReceiveFSM::sendReportUGVSummaryAction(QueryUGVSummary msg, R
 void HealthMonitor_ReceiveFSM::updateUGVSummaryAction(UpdateUGVSummary msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
-	ROS_WARN("HealthMonitor: updateUGVSummaryAction not implemented!");
+	RCLCPP_WARN(logger, "updateUGVSummaryAction not implemented!");
 }
 
 
@@ -99,4 +105,4 @@ bool HealthMonitor_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec tra
 
 
 
-};
+}

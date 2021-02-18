@@ -1,32 +1,33 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(fkie_iop_digital_resource_discovery)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-                    fkie_iop_events
-                    fkie_iop_msgs
-                    roscpp)
-iop_init(COMPONENT_ID 0)
-iop_export_service(urn_jaus_jss_iop_DigitalResourceDiscovery
-                   urn_jaus_jss_iop_DigitalResourceDiscoveryClient)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package(
-    INCLUDE_DIRS include/public
-    LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS
-        fkie_iop_events
-        fkie_iop_msgs
-        roscpp
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-ignored-qualifiers)
+endif()
+
+find_package(ament_cmake REQUIRED)
+find_package(fkie_iop_events REQUIRED)
+find_package(fkie_iop_msgs REQUIRED)
+
+
+###############
+## setup IOP ##
+###############
+iop_init()
+iop_export_service(
+  urn_jaus_jss_iop_DigitalResourceDiscovery
+  urn_jaus_jss_iop_DigitalResourceDiscoveryClient
 )
-
-###########
-## Build ##
-###########
 iop_code_generator(
   IDLS
     urn.jaus.jss.core-v1.1/Events.xml
@@ -40,7 +41,6 @@ iop_code_generator(
     include/urn_jaus_jss_iop_DigitalResourceDiscoveryClient/DigitalResourceDiscoveryClient_ReceiveFSM.h
     src/urn_jaus_jss_iop_DigitalResourceDiscovery/DigitalResourceDiscovery_ReceiveFSM.cpp
     src/urn_jaus_jss_iop_DigitalResourceDiscoveryClient/DigitalResourceDiscoveryClient_ReceiveFSM.cpp
-    src/main.cpp
   EXTERN_SERVICES
     urn_jaus_jss_core_Events
     urn_jaus_jss_core_EventsClient
@@ -48,41 +48,54 @@ iop_code_generator(
   GENERATED_SOURCES cppfiles
 )
 
-include_directories(${catkin_INCLUDE_DIRS}
-                    include/public
+
+###########
+## Build ##
+###########
+set(dependencies
+  fkie_iop_events
+  fkie_iop_msgs
 )
-add_library(${PROJECT_NAME} 
-            src/DigitalResourceDiscoveryClientPlugin.cpp
-            src/DigitalResourceDiscoveryPlugin.cpp
+
+include_directories(
+  include
+  ${IOP_COMPONENT_INCLUDE_DIRS}
+)
+
+add_library(${PROJECT_NAME} SHARED
             src/DigitalResourceEndpoint.cpp
             ${cppfiles}
 )
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-                      ${catkin_LIBRARIES}
-)
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+
+#############
+## Install ##
+#############
 
 install(
-  DIRECTORY ${IOP_INSTALL_INCLUDE_DIRS} DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+  DIRECTORY ${IOP_INSTALL_INCLUDE_DIRS}
+  DESTINATION include/${PROJECT_NAME}
   PATTERN "*.old" EXCLUDE
   PATTERN "*.gen" EXCLUDE
 )
 
 install(
-  DIRECTORY include/public/${PROJECT_NAME} DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+  DIRECTORY include/${PROJECT_NAME}
+  DESTINATION include
   PATTERN "*.old" EXCLUDE
   PATTERN "*.gen" EXCLUDE
 )
 
 install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(
-   FILES ./plugin_iop.xml
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+ament_export_include_directories(include ${IOP_COMPONENT_INCLUDE_DIRS})
+ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(${dependencies})
+pluginlib_export_plugin_description_file(fkie_iop_component plugin_iop.xml)
+
+ament_package()

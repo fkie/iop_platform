@@ -34,16 +34,19 @@ along with this program; or you can read the full license at
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
 
-#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
-#include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
-#include <urn_jaus_jss_core_Discovery/DiscoveryService.h>
+#include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <std_msgs/UInt8.h>
 
 #include "PlatformState_ReceiveFSM_sm.h"
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
+
+#include <urn_jaus_jss_core_Discovery/DiscoveryService.h>
+
+#include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/u_int8.hpp>
 
 namespace urn_jaus_jss_iop_PlatformState
 {
@@ -63,11 +66,12 @@ class DllExport PlatformState_ReceiveFSM : public JTS::StateMachine
 {
 public:
 
-	PlatformState_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM);
+	PlatformState_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
 	virtual ~PlatformState_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
 	virtual void setupNotifications();
+	virtual void setupIopConfiguration();
 
 	/// Action Methods
 	virtual void sendReportPlatformStateAction(Receive::Body::ReceiveRec transportData);
@@ -94,26 +98,29 @@ public:
 
 protected:
 
-    /// References to parent FSMs
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
-	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	/// References to parent FSMs
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+
+	std::shared_ptr<iop::Component> cmp;
+	rclcpp::Logger logger;
+
 	urn_jaus_jss_core_Discovery::Discovery_ReceiveFSM *p_discovery_srv;
 	JausAddress p_own_address;
-
 	ReportPlatformState p_current_state;
 	JausAddress p_requestor;
-	ros::Subscriber p_sub_state;
-	ros::Subscriber p_sub_state_str;
-	ros::Publisher p_pub_state;
-	ros::Publisher p_pub_state_str;
-	int p_init_platform_state;
+	rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr p_sub_state;
+	rclcpp::Subscription<std_msgs::msg::String>::SharedPtr p_sub_state_str;
+	rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr p_pub_state;
+	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr p_pub_state_str;
+	uint8_t p_init_platform_state;
 	std::vector<std::string> p_supported_states;
 
 
 	urn_jaus_jss_core_Discovery::Discovery_ReceiveFSM* p_get_discovery();
-	void pRosNewState(const std_msgs::UInt8::ConstPtr& msg);
-	void pRosNewStateStr(const std_msgs::String::ConstPtr& msg);
+	void pRosNewState(const std_msgs::msg::UInt8::SharedPtr msg);
+	void pRosNewStateStr(const std_msgs::msg::String::SharedPtr msg);
 
 	int p_publish_state(int state);
 	int p_get_current_state();
@@ -123,6 +130,6 @@ protected:
 	bool p_is_supported_state(int state);
 };
 
-};
+}
 
 #endif // PLATFORMSTATE_RECEIVEFSM_H

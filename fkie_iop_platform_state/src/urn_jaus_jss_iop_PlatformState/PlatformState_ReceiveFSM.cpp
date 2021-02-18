@@ -22,9 +22,7 @@ along with this program; or you can read the full license at
 
 
 #include "urn_jaus_jss_iop_PlatformState/PlatformState_ReceiveFSM.h"
-
-#include <ros/console.h>
-#include <fkie_iop_component/iop_component.h>
+#include <fkie_iop_component/iop_config.hpp>
 #include <fkie_iop_discovery/DiscoveryComponent.h>
 
 using namespace JTS;
@@ -35,7 +33,8 @@ namespace urn_jaus_jss_iop_PlatformState
 
 
 
-PlatformState_ReceiveFSM::PlatformState_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
+PlatformState_ReceiveFSM::PlatformState_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("PlatformState"))
 {
 
 	/*
@@ -45,9 +44,10 @@ PlatformState_ReceiveFSM::PlatformState_ReceiveFSM(urn_jaus_jss_core_Transport::
 	 */
 	context = new PlatformState_ReceiveFSMContext(*this);
 
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->cmp = cmp;
 	this->p_discovery_srv = NULL;
 	p_init_platform_state = 1;  //starts with operational state
 }
@@ -69,14 +69,35 @@ void PlatformState_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "PlatformState_ReceiveFSM");
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "PlatformState_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "PlatformState_ReceiveFSM");
+}
+
+
+void PlatformState_ReceiveFSM::setupIopConfiguration()
+{
+	iop::Config cfg(cmp, "PlatformState");
+	cfg.declare_param<uint8_t>("init_platform_state", p_init_platform_state, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
+		"Default state on start.",
+		"Default: 1; 0:initialize, 1:operational, 2:shutdown, 3:system_abort, 4:emergency, 5:render_useless");
+	cfg.declare_param<std::vector<std::string> >("supported_states", p_supported_states, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER_ARRAY,
+		"A list with supported states.",
+		"Default: [OPERATIONAL, EMERGENCY]; Possible entries: initialize, operational, shutdown, system_abort, emergency, render_useless");
+
 	p_own_address = *(jausRouter->getJausAddress());
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryPlatformState::ID);
-	iop::Config cfg("~PlatformState");
-	cfg.param("init_platform_state", p_init_platform_state, p_init_platform_state);
+	std::map<uint8_t, std::string> ps_names;
+	ps_names[0] = "initialize";
+	ps_names[1] = "operational";
+	ps_names[2] = "shutdown";
+	ps_names[3] = "system_abort";
+	ps_names[4] = "emergency";
+	ps_names[5] = "render_useless";
+	cfg.param_named("init_platform_state", p_init_platform_state, p_init_platform_state, ps_names);
 	std::vector<std::string> s_sup_default;
 	s_sup_default.push_back("OPERATIONAL");
 	s_sup_default.push_back("EMERGENCY");
-	cfg.param<std::vector<std::string> >("supported_states", p_supported_states, s_sup_default);
+	cfg.param_vector<std::vector<std::string> >("supported_states", p_supported_states, s_sup_default);
 	// normalize string to lower case
 	std::vector<std::string> nomalizedlist;
 	std::vector<std::string>::iterator it;
@@ -86,19 +107,18 @@ void PlatformState_ReceiveFSM::setupNotifications()
 		nomalizedlist.push_back(normstr);
 	}
 	p_supported_states = nomalizedlist;
-	p_current_state.getBody()->getPlatformStateRec()->setPlatformState(p_get_current_state());
-	p_sub_state = cfg.subscribe<std_msgs::UInt8>("robot_platform_state", 1, &PlatformState_ReceiveFSM::pRosNewState, this);
-	p_sub_state_str = cfg.subscribe<std_msgs::String>("robot_platform_state_str", 1, &PlatformState_ReceiveFSM::pRosNewStateStr, this);
-	p_pub_state = cfg.advertise<std_msgs::UInt8>("set_platform_state", 10);
-	p_pub_state_str = cfg.advertise<std_msgs::String>("set_platform_state_str", 10);
+	p_current_state.getBody()->getPlatformStateRec()->setPlatformState(p_init_platform_state);
+	p_sub_state = cfg.create_subscription<std_msgs::msg::UInt8>("robot_platform_state", 1, std::bind(&PlatformState_ReceiveFSM::pRosNewState, this, std::placeholders::_1));
+	p_sub_state_str = cfg.create_subscription<std_msgs::msg::String>("robot_platform_state_str", 1, std::bind(&PlatformState_ReceiveFSM::pRosNewStateStr, this, std::placeholders::_1));
+	p_pub_state = cfg.create_publisher<std_msgs::msg::UInt8>("set_platform_state", 10);
+	p_pub_state_str = cfg.create_publisher<std_msgs::msg::String>("set_platform_state_str", 10);
 	pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformState::ID, &p_current_state);
 }
 
 Discovery_ReceiveFSM* PlatformState_ReceiveFSM::p_get_discovery()
 {
 	if (p_discovery_srv == NULL) {
-		iop::Component &cmp = iop::Component::get_instance();
-		DiscoveryService *discovery_srv = static_cast<DiscoveryService*>(cmp.get_service("Discovery"));
+		DiscoveryService *discovery_srv = static_cast<DiscoveryService*>(cmp->get_service("Discovery"));
 		if (discovery_srv != NULL) {
 			p_discovery_srv = discovery_srv->pDiscovery_ReceiveFSM;
 		} else {
@@ -108,13 +128,13 @@ Discovery_ReceiveFSM* PlatformState_ReceiveFSM::p_get_discovery()
 	return p_discovery_srv;
 }
 
-void PlatformState_ReceiveFSM::pRosNewState(const std_msgs::UInt8::ConstPtr& msg)
+void PlatformState_ReceiveFSM::pRosNewState(const std_msgs::msg::UInt8::SharedPtr msg)
 {
 	p_current_state.getBody()->getPlatformStateRec()->setPlatformState(msg->data);
 	pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformState::ID, &p_current_state);
 }
 
-void PlatformState_ReceiveFSM::pRosNewStateStr(const std_msgs::String::ConstPtr& msg)
+void PlatformState_ReceiveFSM::pRosNewStateStr(const std_msgs::msg::String::SharedPtr msg)
 {
 	p_current_state.getBody()->getPlatformStateRec()->setPlatformState(p_state2int(msg->data));
 	pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformState::ID, &p_current_state);
@@ -123,7 +143,7 @@ void PlatformState_ReceiveFSM::pRosNewStateStr(const std_msgs::String::ConstPtr&
 void PlatformState_ReceiveFSM::sendReportPlatformStateAction(Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender = transportData.getAddress();
-	ROS_DEBUG_NAMED("PlatformState", "sendReportPlatformStateAction to %s, state: %s [%d]", sender.str().c_str(), p_get_current_state_str().c_str(), p_get_current_state());
+	RCLCPP_DEBUG(logger, "sendReportPlatformStateAction to %s, state: %s [%d]", sender.str().c_str(), p_get_current_state_str().c_str(), p_get_current_state());
 	ReportPlatformState report;
 	report.getBody()->getPlatformStateRec()->setPlatformState(p_get_current_state());
 	// Now send it to the requesting component
@@ -134,21 +154,21 @@ void PlatformState_ReceiveFSM::storeRequesterAction(Receive::Body::ReceiveRec tr
 {
 	JausAddress sender = transportData.getAddress();
 	p_requestor = sender;
-	ROS_DEBUG_NAMED("PlatformState", "storeRequesterAction %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "storeRequesterAction %s", sender.str().c_str());
 }
 
 void PlatformState_ReceiveFSM::triggerEmergencyAction()
 {
 	// set emergency for all components
 	int resp_code = p_publish_state(EMERGENCY);
-	ROS_DEBUG_NAMED("PlatformState", "triggerEmergency from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
+	RCLCPP_DEBUG(logger, "triggerEmergency from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
 	if (p_is_supported_state(EMERGENCY)) {
 		std::vector<iop::DiscoveryComponent> mcp = p_get_discovery()->getComponents("urn:jaus:jss:core:Management");
 		std::vector<iop::DiscoveryComponent>::iterator it;
 		SetEmergency jsmsg;
 		jsmsg.getBody()->getSetEmergencyRec()->setEmergencyCode(1);
 		for (it = mcp.begin(); it != mcp.end(); it++) {
-			ROS_DEBUG_NAMED("PlatformState", "  forward SetEmergency to %s", it->address.str().c_str());
+			RCLCPP_DEBUG(logger, "  forward SetEmergency to %s", it->address.str().c_str());
 			sendJausMessage(jsmsg, it->address);
 			resp_code = TRANSITIONING;
 		}
@@ -162,7 +182,7 @@ void PlatformState_ReceiveFSM::triggerEmergencyAction()
 void PlatformState_ReceiveFSM::triggerRecoverEmergencyAction()
 {
 	int resp_code = p_publish_state(OPERATIONAL);
-	ROS_DEBUG_NAMED("PlatformState", "triggerRecoverEmergency from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
+	RCLCPP_DEBUG(logger, "triggerRecoverEmergency from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
 	// recover emergency for all components
 	if (p_is_supported_state(OPERATIONAL)) {
 		std::vector<iop::DiscoveryComponent> mcp = p_get_discovery()->getComponents("urn:jaus:jss:core:Management");
@@ -170,7 +190,7 @@ void PlatformState_ReceiveFSM::triggerRecoverEmergencyAction()
 		ClearEmergency jsmsg;
 		jsmsg.getBody()->getClearEmergencyRec()->setEmergencyCode(1);
 		for (it = mcp.begin(); it != mcp.end(); it++) {
-			ROS_DEBUG_NAMED("PlatformState", "  forward ClearEmergency to %s", it->address.str().c_str());
+			RCLCPP_DEBUG(logger, "  forward ClearEmergency to %s", it->address.str().c_str());
 			sendJausMessage(jsmsg, it->address);
 			resp_code = TRANSITIONING;
 		}
@@ -187,7 +207,7 @@ void PlatformState_ReceiveFSM::triggerRenderUselessAction()
 	ConfirmPlatformStateRequest msg;
 	msg.getBody()->getConfirmPlatformStateRec()->setPlatformState(RENDER_USELESS);
 	msg.getBody()->getConfirmPlatformStateRec()->setResponseCode(resp_code);
-	ROS_DEBUG_NAMED("PlatformState", "triggerRenderUseless from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
+	RCLCPP_DEBUG(logger, "triggerRenderUseless from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
 	sendJausMessage( msg, p_requestor );
 }
 
@@ -197,7 +217,7 @@ void PlatformState_ReceiveFSM::triggerResetAction()
 	ConfirmPlatformStateRequest msg;
 	msg.getBody()->getConfirmPlatformStateRec()->setPlatformState(INITIALIZE);
 	msg.getBody()->getConfirmPlatformStateRec()->setResponseCode(resp_code);
-	ROS_DEBUG_NAMED("PlatformState", "triggerReset from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
+	RCLCPP_DEBUG(logger, "triggerReset from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
 	sendJausMessage( msg, p_requestor );
 }
 
@@ -207,7 +227,7 @@ void PlatformState_ReceiveFSM::triggerShutdownAction()
 	ConfirmPlatformStateRequest msg;
 	msg.getBody()->getConfirmPlatformStateRec()->setPlatformState(SHUTDOWN);
 	msg.getBody()->getConfirmPlatformStateRec()->setResponseCode(resp_code);
-	ROS_DEBUG_NAMED("PlatformState", "triggerShutdown from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
+	RCLCPP_DEBUG(logger, "triggerShutdown from %s response code %d  (0=TRANSITIONING, 1=INVALID_STATE)", p_requestor.str().c_str(), resp_code);
 	sendJausMessage( msg, p_requestor );
 }
 
@@ -216,17 +236,17 @@ int PlatformState_ReceiveFSM::p_publish_state(int state) {
 	int resp_code = INVALID_STATE;
 	bool supported = p_is_supported_state(state);
 	if (supported) {
-		if (p_pub_state.getNumSubscribers() > 0 || p_pub_state_str.getNumSubscribers() > 0) {
+		if (p_pub_state->get_subscription_count() > 0 || p_pub_state_str->get_subscription_count() > 0) {
 			resp_code = TRANSITIONING;
-			if (p_pub_state.getNumSubscribers() > 0) {
-				std_msgs::UInt8 ros_msg;
+			if (p_pub_state->get_subscription_count() > 0) {
+				auto ros_msg = std_msgs::msg::UInt8();
 				ros_msg.data = state;
-				p_pub_state.publish(ros_msg);
+				p_pub_state->publish(ros_msg);
 			}
-			if (p_pub_state_str.getNumSubscribers() > 0) {
-				std_msgs::String ros_msg;
+			if (p_pub_state_str->get_subscription_count() > 0) {
+				auto ros_msg = std_msgs::msg::String();
 				ros_msg.data = p_state2str(state);
-				p_pub_state_str.publish(ros_msg);
+				p_pub_state_str->publish(ros_msg);
 			}
 		}
 	}
@@ -350,4 +370,4 @@ int PlatformState_ReceiveFSM::p_state2int(std::string state)
 	return -1;
 }
 
-};
+}

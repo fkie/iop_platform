@@ -1,10 +1,5 @@
-<library path="libfkie_iop_platform_mode">
-  <class name="PlatformMode" type="iop::PlatformModePlugin" base_class_type="iop::PluginInterface">
-    <description>
-      PlatformMode Service Plugin
-    </description>
-    <iop_service name="PlatformMode" id="urn:jaus:jss:iop:PlatformMode" version="1.1">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
-    </iop_service>
-  </class>
+<library path="fkie_iop_platform_mode">
+	<class name="PlatformMode" type="urn_jaus_jss_iop_PlatformMode::PlatformModeService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:iop:PlatformMode" version="1.1">
+	</class>
 </library>

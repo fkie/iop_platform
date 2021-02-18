@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="3">
   <name>fkie_iop_platform_manager</name>
   <version>1.0.0</version>
   <description>The meta package which combines services to create a main platform with discovering services.</description>
@@ -8,14 +8,23 @@
   <license>GPLv2</license>
   <url type="website">https://github.com/fkie/iop_platform</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>fkie_iop_builder</run_depend>
-  <run_depend>fkie_iop_digital_resource_discovery</run_depend>
-  <run_depend>fkie_iop_discovery</run_depend>
-  <run_depend>fkie_iop_health_monitor</run_depend>
-  <run_depend>fkie_iop_liveness</run_depend>
-  <run_depend>fkie_iop_management</run_depend>
-  <run_depend>fkie_iop_platform_mode</run_depend>
-  <run_depend>fkie_iop_platform_state</run_depend>
-  <run_depend>fkie_iop_unsolicited_heartbeat</run_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>fkie_iop_builder</depend>
+  <depend>fkie_iop_digital_resource_discovery</depend>
+  <depend>fkie_iop_discovery</depend>
+  <depend>fkie_iop_health_monitor</depend>
+  <depend>fkie_iop_liveness</depend>
+  <depend>fkie_iop_management</depend>
+  <depend>fkie_iop_platform_mode</depend>
+  <depend>fkie_iop_platform_state</depend>
+  <depend>fkie_iop_unsolicited_heartbeat</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
 </package>

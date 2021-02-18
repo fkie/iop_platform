@@ -2,20 +2,22 @@
 
 #include "urn_jaus_jss_iop_HandoffController/HandoffController_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControlClient/AccessControlClient_ReceiveFSM.h"
-#include <fkie_iop_component/iop_component.h>
+#include <fkie_iop_component/iop_component.hpp>
+#include <fkie_iop_component/iop_config.hpp>
 #include <fkie_iop_ocu_slavelib/Slave.h>
 
 
 using namespace JTS;
 using namespace urn_jaus_jss_core_AccessControlClient;
-using namespace urn_jaus_jss_iop_EnhancedAccessControl;
 
 namespace urn_jaus_jss_iop_HandoffController
 {
 
 
 
-HandoffController_ReceiveFSM::HandoffController_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+HandoffController_ReceiveFSM::HandoffController_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("HandoffController")),
+  p_timer(std::chrono::seconds(10), std::bind(&HandoffController_ReceiveFSM::p_timeout, this), false)
 {
 
 	/*
@@ -26,7 +28,8 @@ HandoffController_ReceiveFSM::HandoffController_ReceiveFSM(urn_jaus_jss_core_Tra
 	context = new HandoffController_ReceiveFSMContext(*this);
 
 	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->p_accesscontrol_client = NULL;
+	this->cmp = cmp;
+	this->p_accesscontrol_client = nullptr;
 	p_enhanced_timeout = 10;
 	p_auto_request = false;
 	p_auto_authority = 255;
@@ -37,7 +40,7 @@ HandoffController_ReceiveFSM::HandoffController_ReceiveFSM(urn_jaus_jss_core_Tra
 
 HandoffController_ReceiveFSM::~HandoffController_ReceiveFSM()
 {
-	p_timeout_timer.stop();
+	p_timer.stop();
 	delete context;
 }
 
@@ -45,44 +48,65 @@ void HandoffController_ReceiveFSM::setupNotifications()
 {
 	pTransport_ReceiveFSM->registerNotification("Receiving", ieHandler, "InternalStateChange_To_HandoffController_ReceiveFSM_Receiving", "Transport_ReceiveFSM");
 	registerNotification("Receiving", pTransport_ReceiveFSM->getHandler(), "InternalStateChange_To_Transport_ReceiveFSM_Receiving", "HandoffController_ReceiveFSM");
+}
 
-	iop::Config cfg("~HandoffController");
-	int etimeout = p_enhanced_timeout;
+
+void HandoffController_ReceiveFSM::setupIopConfiguration()
+{
+	iop::Config cfg(cmp, "HandoffController");
+	cfg.declare_param<uint8_t>("enhanced_timeout", p_enhanced_timeout, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
+		"Timeout in seconds.",
+		"Default: 10 sec");
+	cfg.declare_param<bool>("auto_request", p_auto_request, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_BOOL,
+		"Requests automatically handoff on INSUFFICIENT_AUTHORITY.",
+		"Default: false");
+	cfg.declare_param<uint8_t>("auto_authority", p_auto_authority, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
+		"Authority for auto requests.",
+		"Default: 255");
+	cfg.declare_param<std::string>("auto_explanation", p_auto_explanation, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"Explanation text for auto requests.",
+		"Default: \"\"");
+
+	uint64_t etimeout = p_enhanced_timeout;
 	cfg.param("enhanced_timeout", etimeout, etimeout);
 	p_enhanced_timeout = etimeout;
 	cfg.param("auto_request", p_auto_request, p_auto_request);
-	int eauthority = p_auto_authority;
+	uint8_t eauthority = p_auto_authority;
 	cfg.param("auto_authority", eauthority, eauthority);
 	p_auto_authority = eauthority;
 	cfg.param("auto_explanation", p_auto_explanation, p_auto_explanation);
 	//create ROS subscriber
-	p_pub_handoff_response = cfg.advertise<fkie_iop_msgs::HandoffResponse>("handoff_remote_response", 10);
-	p_pub_handoff_request = cfg.advertise<fkie_iop_msgs::HandoffRequest>("handoff_remote_request", 10);
-	p_sub_handoff_request = cfg.subscribe("handoff_own_request", 10, &HandoffController_ReceiveFSM::p_ros_handoff_request, this);
-	p_sub_handoff_response = cfg.subscribe("handoff_own_response", 10, &HandoffController_ReceiveFSM::p_ros_handoff_response, this);
-	iop::ocu::Slave &slave = iop::ocu::Slave::get_instance(*(jausRouter->getJausAddress()));
-	slave.set_supported_handoff(true);
+	p_pub_handoff_response = cfg.create_publisher<fkie_iop_msgs::msg::HandoffResponse>("handoff_remote_response", 10);
+	p_pub_handoff_request = cfg.create_publisher<fkie_iop_msgs::msg::HandoffRequest>("handoff_remote_request", 10);
+	p_sub_handoff_request = cfg.create_subscription<fkie_iop_msgs::msg::HandoffRequest>("handoff_own_request", 10, std::bind(&HandoffController_ReceiveFSM::p_ros_handoff_request, this, std::placeholders::_1));
+	p_sub_handoff_response = cfg.create_subscription<fkie_iop_msgs::msg::HandoffResponse>("handoff_own_response", 10, std::bind(&HandoffController_ReceiveFSM::p_ros_handoff_response, this, std::placeholders::_1));
+	std::shared_ptr<iop::ocu::Slave> slave = iop::ocu::Slave::get_instance(cmp);
+	slave->set_supported_handoff(true);
 	p_subscribe_accesscontrolclient();
 	if (p_auto_request && p_enhanced_timeout > 0) {
-		p_timeout_timer = p_nh.createTimer(ros::Duration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this);
+		p_timer.set_rate(p_enhanced_timeout / 3.0);
 	} else {
-		p_timeout_timer = p_nh.createTimer(ros::Duration(10), &HandoffController_ReceiveFSM::p_timeout, this);
+		p_timer.set_rate(10);
 	}
 }
 
 void HandoffController_ReceiveFSM::processConfirmHandoffRequestAction(ConfirmHandoffRequest msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender = transportData.getAddress();
-	fkie_iop_msgs::HandoffResponse ros_msg;
+	auto ros_msg = fkie_iop_msgs::msg::HandoffResponse();
 	unsigned char code = msg.getBody()->getConfirmHandoffRequestRec()->getResponseCode();
 	unsigned char id = msg.getBody()->getConfirmHandoffRequestRec()->getID();
-	ROS_DEBUG_NAMED("HandoffController", "received handoff confirm: %s (%d) from %s", p_code2str(code).c_str(), code, sender.str().c_str());
+	RCLCPP_DEBUG(logger, "received handoff confirm: %s (%d) from %s", p_code2str(code).c_str(), code, sender.str().c_str());
 	ros_msg.code = code;
 	ros_msg.request_id = id;
 	ros_msg.component.subsystem_id = sender.getSubsystemID();
 	ros_msg.component.node_id = sender.getNodeID();
 	ros_msg.component.component_id = sender.getComponentID();
-	p_pub_handoff_response.publish(ros_msg);
+	p_pub_handoff_response->publish(ros_msg);
 	bool remove = true;
 	if (code == 7) {  // where is no code for WAIT in the confirm message, we use a new one!
 		// do nothing, still send requests
@@ -110,12 +134,12 @@ void HandoffController_ReceiveFSM::processHandoffRequestsAction(RequestReleaseCo
 	std::vector<JausAddress> current_list;
 	for (unsigned int i = 0; i < msg.getBody()->getRequestReleaseControlList()->getNumberOfElements(); i++) {
 		RequestReleaseControl::Body::RequestReleaseControlList::RequestReleaseControlRec *rr_rec = msg.getBody()->getRequestReleaseControlList()->getElement(i);
-		fkie_iop_msgs::HandoffRequest ros_msg;
+		auto ros_msg = fkie_iop_msgs::msg::HandoffRequest();
 		ros_msg.request = true;
 		ros_msg.authority_code = rr_rec->getAuthorityCode();
 		ros_msg.explanation = rr_rec->getExplanation();
 		ros_msg.request_id = rr_rec->getID();
-		ROS_DEBUG_NAMED("HandoffController", "received handoff request for %d.%d.%d, auth: %d from %s, explanation: %s",
+		RCLCPP_DEBUG(logger, "received handoff request for %d.%d.%d, auth: %d from %s, explanation: %s",
 				rr_rec->getSrcSubsystemID(), rr_rec->getSrcNodeID(), rr_rec->getSrcComponentID(), rr_rec->getAuthorityCode(), sender.str().c_str(), rr_rec->getExplanation().c_str());
 		ros_msg.component.subsystem_id = transportData.getSrcSubsystemID();
 		ros_msg.component.node_id = transportData.getSrcNodeID();
@@ -125,26 +149,26 @@ void HandoffController_ReceiveFSM::processHandoffRequestsAction(RequestReleaseCo
 		ros_msg.ocu.component_id = rr_rec->getSrcComponentID();
 		JausAddress ocu_addr(rr_rec->getSrcSubsystemID(), rr_rec->getSrcNodeID(), rr_rec->getSrcComponentID());
 		current_list.push_back(ocu_addr);
-		p_pub_handoff_request.publish(ros_msg);
+		p_pub_handoff_request->publish(ros_msg);
 	}
 	// publish for each removed request a handoff request with request=false
 	std::vector<JausAddress>::iterator it;
 	for (it = p_remote_requests.begin(); it != p_remote_requests.end(); ++it) {
 		std::vector<JausAddress>::iterator search_it = std::find(current_list.begin(), current_list.end(), *it);
 		if (search_it == current_list.end()) {
-			fkie_iop_msgs::HandoffRequest ros_msg;
+			auto ros_msg = fkie_iop_msgs::msg::HandoffRequest();
 			ros_msg.request = false;
 			ros_msg.authority_code = 255;
 			ros_msg.explanation = "not in the queue list anymore";
 			ros_msg.request_id = 255;
-			ROS_DEBUG_NAMED("HandoffController", "  remove handoff request for %s, from %s", it->str().c_str(), sender.str().c_str());
+			RCLCPP_DEBUG(logger, "  remove handoff request for %s, from %s", it->str().c_str(), sender.str().c_str());
 			ros_msg.component.subsystem_id = transportData.getSrcSubsystemID();
 			ros_msg.component.node_id = transportData.getSrcNodeID();
 			ros_msg.component.component_id = transportData.getSrcComponentID();
 			ros_msg.ocu.subsystem_id = it->getSubsystemID();
 			ros_msg.ocu.node_id = it->getNodeID();
 			ros_msg.ocu.component_id = it->getComponentID();
-			p_pub_handoff_request.publish(ros_msg);
+			p_pub_handoff_request->publish(ros_msg);
 		}
 	}
 	p_remote_requests = std::vector<JausAddress>(current_list);
@@ -155,13 +179,14 @@ void HandoffController_ReceiveFSM::processReportEnhancedTimeoutAction(ReportEnha
 	unsigned char timeoput = msg.getBody()->getReportEnhancedTimeoutRec()->getTimeout();
 	if (p_enhanced_timeout > msg.getBody()->getReportEnhancedTimeoutRec()->getTimeout()) {
 		JausAddress sender = transportData.getAddress();
-		ROS_DEBUG_NAMED("HandoffController", "update EnhancedTimeout to %d from %s", timeoput, sender.str().c_str());
+		RCLCPP_DEBUG(logger, "update EnhancedTimeout to %d from %s", timeoput, sender.str().c_str());
 		p_enhanced_timeout = timeoput;
 		// restart timer, if already running
-		p_timeout_timer.stop();
+		p_timer.stop();
 		if (p_enhanced_timeout != 0) {
-			ROS_DEBUG_NAMED("HandoffController", "create timer with new period %.2f", p_enhanced_timeout / 3.0);
-			p_timeout_timer = p_nh.createTimer(ros::Duration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this);
+			RCLCPP_DEBUG(logger, "create timer with new period %.2f", p_enhanced_timeout / 3.0);
+			p_timer.set_rate(p_enhanced_timeout / 3.0);
+			p_timer.start();
 		}
 	}
 }
@@ -173,26 +198,25 @@ void HandoffController_ReceiveFSM::processReportHandoffTimeoutAction(ReportHando
 
 void HandoffController_ReceiveFSM::p_subscribe_accesscontrolclient()
 {
-	if (p_accesscontrol_client == NULL) {
-		iop::Component &cmp = iop::Component::get_instance();
-		AccessControlClientService *accesscontrol_srv = static_cast<AccessControlClientService*>(cmp.get_service("AccessControlClient"));
+	if (p_accesscontrol_client == nullptr) {
+		AccessControlClientService *accesscontrol_srv = static_cast<AccessControlClientService*>(cmp->get_service("AccessControlClient"));
 		if (accesscontrol_srv != NULL) {
 			p_accesscontrol_client = accesscontrol_srv->pAccessControlClient_ReceiveFSM;
 			p_accesscontrol_client->add_reply_handler(&HandoffController_ReceiveFSM::p_accesscontrolclient_reply_handler, this);
 		} else {
-			ROS_WARN_ONCE_NAMED("Slave", "no AccessControlClient found! Please include its plugin first (in the list), if you needs one!");
+			RCLCPP_WARN_ONCE(logger, "no AccessControlClient found! Please include its plugin first (in the list), if you needs one!");
 		}
 	}
 }
 
-void HandoffController_ReceiveFSM::p_accesscontrolclient_reply_handler(JausAddress &address, unsigned char code)
+void HandoffController_ReceiveFSM::p_accesscontrolclient_reply_handler(JausAddress &address, uint8_t code)
 {
 	lock_type lock(p_mutex);
-	ROS_DEBUG_NAMED("HandoffController", "access control reply from %s, code: %d", address.str().c_str(), (int)code);
+	RCLCPP_DEBUG(logger, "access control reply from %s, code: %d", address.str().c_str(), (int)code);
 	if (code == AccessControlClient_ReceiveFSM::ACCESS_STATE_INSUFFICIENT_AUTHORITY) {
-		ROS_DEBUG_NAMED("HandoffController", "code %d is ACCESS_STATE_INSUFFICIENT_AUTHORITY", (int)code);
+		RCLCPP_DEBUG(logger, "code %d is ACCESS_STATE_INSUFFICIENT_AUTHORITY", (int)code);
 		if (std::find(p_rejected_addresses.begin(), p_rejected_addresses.end(), address) == p_rejected_addresses.end()) {
-			ROS_DEBUG_NAMED("HandoffController", "add to rejected addresses %s", address.str().c_str());
+			RCLCPP_DEBUG(logger, "add to rejected addresses %s", address.str().c_str());
 			p_rejected_addresses.push_back(address);
 			if (p_auto_request) {
 				p_checked_add(p_in_request, address);
@@ -208,7 +232,7 @@ void HandoffController_ReceiveFSM::p_accesscontrolclient_reply_handler(JausAddre
 
 }
 
-void HandoffController_ReceiveFSM::p_ros_handoff_request(const fkie_iop_msgs::HandoffRequest::ConstPtr msg)
+void HandoffController_ReceiveFSM::p_ros_handoff_request(const fkie_iop_msgs::msg::HandoffRequest::SharedPtr msg)
 {
 	lock_type lock(p_mutex);
 	if (msg->request) {
@@ -217,27 +241,25 @@ void HandoffController_ReceiveFSM::p_ros_handoff_request(const fkie_iop_msgs::Ha
 		p_auto_explanation = msg->explanation;
 		// p_in_request = std::vector<JausAddress>(p_rejected_addresses);
 		JausAddress component(msg->component.subsystem_id, msg->component.node_id, msg->component.component_id);
-		ROS_DEBUG_NAMED("HandoffController", "received handoff request from ROS for %s", component.str().c_str());
+		RCLCPP_DEBUG(logger, "received handoff request from ROS for %s", component.str().c_str());
 		p_checked_add(p_in_request, component);
 		p_update_handoff_requests();
 		if (p_enhanced_timeout != 0) {
-			ROS_DEBUG_NAMED("HandoffController", "create timer with new period %.2f", p_enhanced_timeout / 3.0);
-			p_timeout_timer = p_nh.createTimer(ros::Duration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this);
+			RCLCPP_DEBUG(logger, "create timer with new period %.2f", p_enhanced_timeout / 3.0);
+			p_timer.set_rate(p_enhanced_timeout / 3.0);
+			p_timer.start();
 		}
 	} else {
-		ROS_DEBUG_NAMED("HandoffController", "received request to cancel handoff requests, stop timer. No RemoveHandoffRequest is send!");
+		RCLCPP_DEBUG(logger, "received request to cancel handoff requests, stop timer. No RemoveHandoffRequest is send!");
 		p_auto_request = false;
-		// stop timeout
-		if (p_timeout_timer.isValid()) {
-			p_timeout_timer.stop();
-		}
+		p_timer.stop();
 		// remove requests
 		// we do not send RemoveHandoffRequest, because we did not saved ID. The request should be removed after a timeout by EnhancedAccessControl.
 		p_in_request.clear();
 	}
 }
 
-void HandoffController_ReceiveFSM::p_ros_handoff_response(const fkie_iop_msgs::HandoffResponse::ConstPtr msg)
+void HandoffController_ReceiveFSM::p_ros_handoff_response(const fkie_iop_msgs::msg::HandoffResponse::SharedPtr msg)
 {
 	ConfirmReleaseControl reply;
 	ConfirmReleaseControl::Body::ReleaseControlList::ReleaseControlRec rcrec;
@@ -251,11 +273,11 @@ void HandoffController_ReceiveFSM::p_ros_handoff_response(const fkie_iop_msgs::H
 	}
 	reply.getBody()->getReleaseControlList()->addElement(rcrec);
 	JausAddress address(msg->component.subsystem_id, msg->component.node_id, msg->component.component_id);
-	ROS_DEBUG_NAMED("HandoffController", "send handoff response to %s, code: %d", address.str().c_str(), rcrec.getID());
+	RCLCPP_DEBUG(logger, "send handoff response to %s, code: %d", address.str().c_str(), rcrec.getID());
 	sendJausMessage(reply, address);
 }
 
-std::string HandoffController_ReceiveFSM::p_code2str(unsigned char code)
+std::string HandoffController_ReceiveFSM::p_code2str(uint8_t code)
 {
 	std::string result = "UNKNOWN CODE";
 	switch (code) {
@@ -279,7 +301,7 @@ std::string HandoffController_ReceiveFSM::p_code2str(unsigned char code)
 	return result;
 }
 
-void HandoffController_ReceiveFSM::p_timeout(const ros::TimerEvent& event)
+void HandoffController_ReceiveFSM::p_timeout()
 {
 	p_update_handoff_requests();
 }
@@ -295,10 +317,10 @@ void HandoffController_ReceiveFSM::p_update_handoff_requests()
 		for (it = p_in_request.begin(); it != p_in_request.end(); it++) {
 			QueryEnhancedTimeout qt;
 			sendJausMessage(qt, *it);
-			ROS_DEBUG_NAMED("HandoffController", "send handoff request to %s, authority: %d, explanation: %s", it->str().c_str(), (int)p_auto_authority, p_auto_explanation.c_str());
+			RCLCPP_DEBUG(logger, "send handoff request to %s, authority: %d, explanation: %s", it->str().c_str(), (int)p_auto_authority, p_auto_explanation.c_str());
 			this->sendJausMessage(request, *it);
 		}
 	}
 }
 
-};
+}

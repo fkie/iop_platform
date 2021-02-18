@@ -25,6 +25,7 @@ along with this program; or you can read the full license at
 #define PLATFORMSTATECLIENT_RECEIVEFSM_H
 
 #include "JausUtils.h"
+#include "JausUtils.h"
 #include "InternalEvents/InternalEventHandler.h"
 #include "Transport/JausTransport.h"
 #include "JTSStateMachine.h"
@@ -34,20 +35,22 @@ along with this program; or you can read the full license at
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
 
-#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
-#include "urn_jaus_jss_core_EventsClient/EventsClient_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControlClient/AccessControlClient_ReceiveFSM.h"
+#include "urn_jaus_jss_core_EventsClient/EventsClient_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <std_msgs/UInt8.h>
-#include <fkie_iop_ocu_slavelib/SlaveHandlerInterface.h>
-#include <fkie_iop_events/EventHandlerInterface.h>
 
 #include "PlatformStateClient_ReceiveFSM_sm.h"
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
+
+#include <functional>
+
+#include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/u_int8.hpp>
+#include <fkie_iop_ocu_slavelib/SlaveHandlerInterface.h>
+#include <fkie_iop_events/EventHandlerInterface.h>
+#include <fkie_iop_component/timer.hpp>
 
 namespace urn_jaus_jss_iop_PlatformStateClient
 {
@@ -66,11 +69,12 @@ const int INVALID_STATE = 1;
 class DllExport PlatformStateClient_ReceiveFSM : public JTS::StateMachine, public iop::ocu::SlaveHandlerInterface, public iop::EventHandlerInterface
 {
 public:
-	PlatformStateClient_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM);
+	PlatformStateClient_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
 	virtual ~PlatformStateClient_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
 	virtual void setupNotifications();
+	virtual void setupIopConfiguration();
 
 	/// Action Methods
 	virtual void handleConfirmPlatformStateRequestAction(ConfirmPlatformStateRequest msg, Receive::Body::ReceiveRec transportData);
@@ -79,7 +83,7 @@ public:
 
 	template<class T>
 	void set_state_handler(void(T::*handler)(JausAddress &, unsigned char state), T*obj) {
-		p_class_interface_callback = boost::bind(handler, obj, _1, _2);
+		p_class_interface_callback = std::bind(handler, obj, std::placeholders::_1, std::placeholders::_2);
 	}
 	void query_state(JausAddress address);
 	/**
@@ -110,19 +114,20 @@ public:
 
 protected:
 
-    /// References to parent FSMs
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
-	urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM;
+	/// References to parent FSMs
 	urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM;
+	urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
 
-	boost::function<void (JausAddress &, unsigned char state)> p_class_interface_callback;
+	std::shared_ptr<iop::Component> cmp;
+	rclcpp::Logger logger;
+	iop::Timer p_query_timer;
 
-	ros::NodeHandle p_nh;
-	ros::Timer p_query_timer;
-	ros::Subscriber p_sub_state;
-	ros::Subscriber p_sub_state_str;
-	ros::Publisher p_pub_state;
-	ros::Publisher p_pub_state_str;
+	std::function<void (JausAddress &, unsigned char state)> p_class_interface_callback;
+	rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr p_sub_state;
+	rclcpp::Subscription<std_msgs::msg::String>::SharedPtr p_sub_state_str;
+	rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr p_pub_state;
+	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr p_pub_state_str;
 	int p_state;
 	double p_hz;
 	bool p_has_access;
@@ -131,14 +136,14 @@ protected:
 	QueryPlatformState p_query_platform_state_msg;
 
 
-	void pRosNewCmdState(const std_msgs::UInt8::ConstPtr& msg);
-	void pRosNewCmdStateStr(const std_msgs::String::ConstPtr& msg);
-	void pQueryCallback(const ros::TimerEvent& event);
+	void pRosNewCmdState(const std_msgs::msg::UInt8::SharedPtr msg);
+	void pRosNewCmdStateStr(const std_msgs::msg::String::SharedPtr msg);
+	void pQueryCallback();
 	void p_publish_state(int state);
 	std::string p_state2str(int state);
 	int p_state2int(std::string state);
 };
 
-};
+}
 
 #endif // PLATFORMSTATECLIENT_RECEIVEFSM_H

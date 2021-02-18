@@ -1,19 +1,8 @@
-<library path="libfkie_iop_platform_state">
-  <class name="PlatformState" type="iop::PlatformStatePlugin" base_class_type="iop::PluginInterface">
-    <description>
-      PlatformState Service Plugin
-    </description>
-    <iop_service name="PlatformState" id="urn:jaus:jss:iop:PlatformState" version="1.1">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
-      <depend id="urn:jaus:jss:core:Discovery"/>
-    </iop_service>
-  </class>
-  <class name="PlatformStateClient" type="iop::PlatformStateClientPlugin" base_class_type="iop::PluginInterface">
-    <description>
-      PlatformState client Service Plugin, used e.g. by OCU
-    </description>
-    <iop_service name="PlatformStateClient" id="urn:jaus:jss:iop:PlatformStateClient" version="1.1">
-      <inherits_from id="urn:jaus:jss:core:AccessControlClient" min_version="1.1"/>
-    </iop_service>
-  </class>
+<library path="fkie_iop_platform_state">
+	<class name="PlatformState" type="urn_jaus_jss_iop_PlatformState::PlatformStateService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:iop:PlatformState" version="1.1">
+	</class>
+	<class name="PlatformStateClient" type="urn_jaus_jss_iop_PlatformStateClient::PlatformStateClientService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:iop:PlatformStateClient" version="1.1">
+	</class>
 </library>

@@ -28,9 +28,11 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_iop_EnhancedAccessControl/Messages/MessageSet.h"
 #include "urn_jaus_jss_iop_EnhancedAccessControl/InternalEvents/InternalEventsSet.h"
 
-#include <boost/thread/recursive_mutex.hpp>
-#include <ros/ros.h>
 #include <string>
+#include <memory>
+#include <mutex>
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
 
 namespace iop
 {
@@ -42,14 +44,14 @@ public:
 	unsigned char id;
 	std::string explanation;
 	/// time stamp in seconds of last request. No requests are defined by 0.
-	unsigned int ts_enhanced_request;
+	int64_t ts_enhanced_request;
 
 	HandoffRequest(unsigned char id, JausAddress requestor, unsigned char authority, std::string explanation) {
 		this->id = id;
 		this->requestor = requestor;
 		this->authority = authority;
 		this->explanation = explanation;
-		ts_enhanced_request = ros::Time::now().nsec;
+		ts_enhanced_request = iop::Component::now_secs();
 	}
 
 	HandoffRequest() {
@@ -66,33 +68,33 @@ public:
 
 class InternalHandoffRequestList {
 public:
-	InternalHandoffRequestList(unsigned char enhanced_timeout=10, unsigned char handoff_timeout=60);
+	InternalHandoffRequestList(std::shared_ptr<iop::Component> cmp, unsigned char enhanced_timeout=10, unsigned char handoff_timeout=60);
 	~InternalHandoffRequestList();
 
 	bool contains(JausAddress requestor);
-	boost::shared_ptr<iop::HandoffRequest> get(JausAddress requestor);
-	boost::shared_ptr<iop::HandoffRequest> get(unsigned char id);
+	std::shared_ptr<iop::HandoffRequest> get(JausAddress requestor);
+	std::shared_ptr<iop::HandoffRequest> get(unsigned char id);
 	/** Does not test for existing handoff requests from the same requestor.*/
-	boost::shared_ptr<iop::HandoffRequest> add(JausAddress requestor, unsigned char authority, std::string explanation);
-	boost::shared_ptr<iop::HandoffRequest> update(JausAddress requestor, unsigned int current_ts=0);
-	boost::shared_ptr<iop::HandoffRequest> update(JausAddress requestor, unsigned char authority, std::string explanation, unsigned int current_ts=0);
-	boost::shared_ptr<iop::HandoffRequest> remove(unsigned char id);
-	boost::shared_ptr<iop::HandoffRequest> remove(JausAddress requestor);
-	boost::shared_ptr<iop::HandoffRequest> get_first_expired_enhanced_request(unsigned int current_ts=0);
+	std::shared_ptr<iop::HandoffRequest> add(JausAddress requestor, unsigned char authority, std::string explanation);
+	std::shared_ptr<iop::HandoffRequest> update(JausAddress requestor, int64_t current_ts=0);
+	std::shared_ptr<iop::HandoffRequest> update(JausAddress requestor, unsigned char authority, std::string explanation, int64_t current_ts=0);
+	std::shared_ptr<iop::HandoffRequest> remove(unsigned char id);
+	std::shared_ptr<iop::HandoffRequest> remove(JausAddress requestor);
+	std::shared_ptr<iop::HandoffRequest> get_first_expired_enhanced_request(int64_t current_ts=0);
 	/** Returns a copy of all HandofRequests. */
 	std::vector<HandoffRequest> get_all();
 
 	/** Tests if given `ts_handoff_request` has expired.
 	 * :param current_ts: current time stamp in seconds. If 0 the time is determine by this method.
-	 * :type current_ts: unsigend int */
-	bool expired_handoff_request(unsigned int current_ts=0);
+	 * :type current_ts: int64_t */
+	bool expired_handoff_request(int64_t current_ts=0);
 
 	/** Tests if given `ts_enhanced_request` has expired.
 	 * :param ts_enhanced_request: time stamp of last request in seconds. Returns `false` on 0.
-	 * :type ts_enhanced_request: unsigend int
+	 * :type ts_enhanced_request: int64_t
 	 * :param current_ts: current time stamp in seconds. If 0 the time is determine by this method.
-	 * :type current_ts: unsigend int */
-	bool expired_enhanced_request(unsigned int ts_enhanced_request, unsigned int current_ts=0);
+	 * :type current_ts: int64_t */
+	bool expired_enhanced_request(int64_t ts_enhanced_request, int64_t current_ts=0);
 
 	/// Clients must re-request handoff to prevent being denied handoff request when the timeout expires. A value of zero indicates this feature is disabled.
 	unsigned char enhanced_timeout;
@@ -100,19 +102,20 @@ public:
 	unsigned char handoff_timeout;
 
 	/// time stamp in seconds of last ReuestReleaseControl request. No requests are defined by 0.
-	unsigned int ts_handoff_request;
+	int64_t ts_handoff_request;
 
 
 protected:
-	typedef boost::recursive_mutex mutex_type;
-	typedef boost::unique_lock<mutex_type> lock_type;
+	rclcpp::Logger logger;
+	typedef std::recursive_mutex mutex_type;
+	typedef std::unique_lock<mutex_type> lock_type;
 	mutable mutex_type p_mutex;
 
 	unsigned char p_current_id;
-	std::vector<boost::shared_ptr<HandoffRequest> > p_requests;
-	unsigned int p_resolve_ts(unsigned int ts);
+	std::vector<std::shared_ptr<HandoffRequest> > p_requests;
+	int64_t p_resolve_ts(int64_t ts);
 };
 
-};
+}
 
 #endif

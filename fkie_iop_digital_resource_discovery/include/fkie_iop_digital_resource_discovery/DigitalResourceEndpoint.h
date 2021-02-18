@@ -64,6 +64,6 @@ class DigitalResourceEndpoint
   bool operator!=(const DigitalResourceEndpoint &value) const;
 };
 
-};
+}
 
 #endif // DIGITAL_RESOURCE_ENDPOINT_H

@@ -1,18 +1,35 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(fkie_iop_platform_manager)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-ignored-qualifiers)
+endif()
+
+find_package(ament_cmake REQUIRED)
+find_package(fkie_iop_builder REQUIRED)
+find_package(fkie_iop_digital_resource_discovery REQUIRED)
+find_package(fkie_iop_discovery REQUIRED)
+find_package(fkie_iop_health_monitor REQUIRED)
+find_package(fkie_iop_liveness REQUIRED)
+find_package(fkie_iop_management REQUIRED)
+find_package(fkie_iop_platform_mode REQUIRED)
+find_package(fkie_iop_platform_state REQUIRED)
+find_package(fkie_iop_unsolicited_heartbeat REQUIRED)
+
 
 install(
-   FILES launch/platform_manager.launch
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+   DIRECTORY launch
+   DESTINATION share/${PROJECT_NAME}
 )
+
+ament_package()

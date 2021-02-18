@@ -22,12 +22,12 @@ along with this program; or you can read the full license at
 
 
 #include <fkie_iop_handoff/InternalHandoffRequestList.h>
-#include <ros/ros.h>
-#include <ros/console.h>
+#include <fkie_iop_component/iop_component.hpp>
 
 using namespace iop;
 
-InternalHandoffRequestList::InternalHandoffRequestList(unsigned char enhanced_timeout, unsigned char handoff_timeout)
+InternalHandoffRequestList::InternalHandoffRequestList(std::shared_ptr<iop::Component> cmp, unsigned char enhanced_timeout, unsigned char handoff_timeout)
+: logger(cmp->get_logger().get_child("InternalHandoffRequestList"))
 {
 	this->enhanced_timeout = enhanced_timeout;
 	this->handoff_timeout = handoff_timeout;
@@ -43,7 +43,7 @@ InternalHandoffRequestList::~InternalHandoffRequestList()
 bool InternalHandoffRequestList::contains(JausAddress requestor)
 {
 	lock_type lock(p_mutex);
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (requestor == it->get()->requestor) {
 			return true;
@@ -52,60 +52,60 @@ bool InternalHandoffRequestList::contains(JausAddress requestor)
 	return false;
 }
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::get(JausAddress requestor)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::get(JausAddress requestor)
 {
 	lock_type lock(p_mutex);
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (requestor == it->get()->requestor) {
 			return *it;
 		}
 	}
-	boost::shared_ptr<HandoffRequest> nullPtr;
+	std::shared_ptr<HandoffRequest> nullPtr;
 	return nullPtr;
 }
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::get(unsigned char id)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::get(unsigned char id)
 {
 	lock_type lock(p_mutex);
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (id == it->get()->id) {
 			return *it;
 		}
 	}
-	boost::shared_ptr<HandoffRequest> nullPtr;
+	std::shared_ptr<HandoffRequest> nullPtr;
 	return nullPtr;
 }
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::add(JausAddress requestor, unsigned char authority, std::string explanation)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::add(JausAddress requestor, unsigned char authority, std::string explanation)
 {
 	lock_type lock(p_mutex);
 	p_current_id++;
-	boost::shared_ptr<HandoffRequest> request(boost::make_shared<HandoffRequest>(p_current_id, requestor, authority, explanation));
+	std::shared_ptr<HandoffRequest> request(std::make_shared<HandoffRequest>(p_current_id, requestor, authority, explanation));
 	p_requests.push_back(request);
 	return p_requests[p_requests.size()-1];
 }
 
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::update(JausAddress requestor, unsigned int current_ts)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::update(JausAddress requestor, int64_t current_ts)
 {
 	lock_type lock(p_mutex);
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (requestor == it->get()->requestor) {
 			it->get()->ts_enhanced_request = p_resolve_ts(current_ts);
 			return *it;
 		}
 	}
-	boost::shared_ptr<HandoffRequest> nullPtr;
+	std::shared_ptr<HandoffRequest> nullPtr;
 	return nullPtr;
 }
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::update(JausAddress requestor, unsigned char authority, std::string explanation, unsigned int current_ts)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::update(JausAddress requestor, unsigned char authority, std::string explanation, int64_t current_ts)
 {
 	lock_type lock(p_mutex);
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (requestor == it->get()->requestor) {
 			it->get()->authority = authority;
@@ -114,15 +114,15 @@ boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::update(JausAd
 			return *it;
 		}
 	}
-	boost::shared_ptr<HandoffRequest> nullPtr;
+	std::shared_ptr<HandoffRequest> nullPtr;
 	return nullPtr;
 }
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::remove(unsigned char id)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::remove(unsigned char id)
 {
 	lock_type lock(p_mutex);
-	boost::shared_ptr<HandoffRequest> result;
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::shared_ptr<HandoffRequest> result;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (id == it->get()->id) {
 			result = *it;
@@ -133,11 +133,11 @@ boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::remove(unsign
 	return result;
 }
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::remove(JausAddress requestor)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::remove(JausAddress requestor)
 {
 	lock_type lock(p_mutex);
-	boost::shared_ptr<HandoffRequest> result;
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::shared_ptr<HandoffRequest> result;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (requestor == it->get()->requestor) {
 			result = *it;
@@ -148,11 +148,11 @@ boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::remove(JausAd
 	return result;
 }
 
-boost::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::get_first_expired_enhanced_request(unsigned int current_ts)
+std::shared_ptr<iop::HandoffRequest> InternalHandoffRequestList::get_first_expired_enhanced_request(int64_t current_ts)
 {
 	lock_type lock(p_mutex);
-	boost::shared_ptr<HandoffRequest> result;
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::shared_ptr<HandoffRequest> result;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		if (expired_enhanced_request(it->get()->ts_enhanced_request, current_ts)) {
 			result = *it;
@@ -166,14 +166,14 @@ std::vector<HandoffRequest> InternalHandoffRequestList::get_all()
 {
 	lock_type lock(p_mutex);
 	std::vector<HandoffRequest> result;
-	std::vector<boost::shared_ptr<HandoffRequest> >::iterator it;
+	std::vector<std::shared_ptr<HandoffRequest> >::iterator it;
 	for (it = p_requests.begin(); it != p_requests.end(); ++it) {
 		result.push_back(*(it->get()));
 	}
 	return result;
 }
 
-bool InternalHandoffRequestList::expired_handoff_request(unsigned int current_ts)
+bool InternalHandoffRequestList::expired_handoff_request(int64_t current_ts)
 {
 	if (ts_handoff_request > 0) {
 		return p_resolve_ts(current_ts) > ts_handoff_request + handoff_timeout;
@@ -181,19 +181,19 @@ bool InternalHandoffRequestList::expired_handoff_request(unsigned int current_ts
 	return false;
 }
 
-bool InternalHandoffRequestList::expired_enhanced_request(unsigned int ts_enhanced_request, unsigned int current_ts)
+bool InternalHandoffRequestList::expired_enhanced_request(int64_t ts_enhanced_request, int64_t current_ts)
 {
 	if (ts_enhanced_request > 0) {
-		ROS_DEBUG("COMPARE ts %d, %d, timeout: %d", (int)ts_enhanced_request, (int)p_resolve_ts(current_ts), enhanced_timeout);
+		RCLCPP_DEBUG(logger, "COMPARE ts %d, %d, timeout: %d", (int)ts_enhanced_request, (int)p_resolve_ts(current_ts), enhanced_timeout);
 		return p_resolve_ts(current_ts) > ts_enhanced_request + enhanced_timeout;
 	}
 	return false;
 }
 
-unsigned int InternalHandoffRequestList::p_resolve_ts(unsigned int ts)
+int64_t InternalHandoffRequestList::p_resolve_ts(int64_t ts)
 {
 	if (ts == 0) {
-		return ros::Time::now().sec;
+		return iop::Component::now_secs();
 	}
 	return ts;
 }

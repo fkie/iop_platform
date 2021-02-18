@@ -69,4 +69,4 @@ bool DigitalResourceEndpoint::operator!=(const DigitalResourceEndpoint &value) c
   return !((*this) == value);
 }
 
-};
+}

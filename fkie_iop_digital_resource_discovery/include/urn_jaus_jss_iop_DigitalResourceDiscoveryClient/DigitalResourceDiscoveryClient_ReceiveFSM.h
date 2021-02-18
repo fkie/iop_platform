@@ -34,17 +34,18 @@ along with this program; or you can read the full license at
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
 
-#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 #include "urn_jaus_jss_core_EventsClient/EventsClient_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 
 
 #include "DigitalResourceDiscoveryClient_ReceiveFSM_sm.h"
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
+
+#include <functional>
 #include <fkie_iop_digital_resource_discovery/DigitalResourceEndpoint.h>
-#include <ros/ros.h>
-#include <fkie_iop_msgs/DigitalResourceEndpoints.h>
-#include <fkie_iop_msgs/QueryByAddr.h>
+#include <fkie_iop_msgs/msg/digital_resource_endpoints.hpp>
+#include <fkie_iop_msgs/srv/query_by_addr.hpp>
 
 
 namespace urn_jaus_jss_iop_DigitalResourceDiscoveryClient
@@ -53,11 +54,12 @@ namespace urn_jaus_jss_iop_DigitalResourceDiscoveryClient
 class DllExport DigitalResourceDiscoveryClient_ReceiveFSM : public JTS::StateMachine
 {
 public:
-	DigitalResourceDiscoveryClient_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM);
+	DigitalResourceDiscoveryClient_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
 	virtual ~DigitalResourceDiscoveryClient_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
 	virtual void setupNotifications();
+	virtual void setupIopConfiguration();
 
 	/// Action Methods
 	virtual void confirmDigitalResourceEndpointAction(ConfirmDigitalResourceEndpoint msg, Receive::Body::ReceiveRec transportData);
@@ -69,7 +71,7 @@ public:
 	void unregisterEndpoint(digital_resource_endpoint::DigitalResourceEndpoint endpoint, const JausAddress digital_resource_discovery_service);
 	template<class T>
 	void set_discovery_handler(void(T::*handler)(std::vector<digital_resource_endpoint::DigitalResourceEndpoint>, JausAddress &), T*obj) {
-		class_discovery_callback_ = boost::bind(handler, obj, _1, _2);
+		class_discovery_callback_ = std::bind(handler, obj, std::placeholders::_1, std::placeholders::_2);
 	}
 	void discoverEndpoints(const JausAddress digital_resource_discovery_service);
 
@@ -77,24 +79,26 @@ public:
 
 protected:
 
-    /// References to parent FSMs
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+	/// References to parent FSMs
 	urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+
+	std::shared_ptr<iop::Component> cmp;
+	rclcpp::Logger logger;
 	std::deque<digital_resource_endpoint::DigitalResourceEndpoint> p_toregister_endpoints;
 	std::deque<digital_resource_endpoint::DigitalResourceEndpoint> p_tounregister_endpoints;
 	std::deque<digital_resource_endpoint::DigitalResourceEndpoint> p_registered_endpoints;
 	unsigned char p_request_id;
-	boost::function<void (std::vector<digital_resource_endpoint::DigitalResourceEndpoint>, JausAddress &)> class_discovery_callback_;
+	std::function<void (std::vector<digital_resource_endpoint::DigitalResourceEndpoint>, JausAddress &)> class_discovery_callback_;
 	bool p_enable_ros_interface;
-	ros::NodeHandle p_nh;
-	ros::Publisher p_pub_endoints;
-	ros::ServiceServer p_srv_update_endpoints;
+	rclcpp::Publisher<fkie_iop_msgs::msg::DigitalResourceEndpoints>::SharedPtr p_pub_endoints;
+	rclcpp::Service<fkie_iop_msgs::srv::QueryByAddr>::SharedPtr p_srv_update_endpoints;
 
-	bool pUpdateEndpointsSrv(fkie_iop_msgs::QueryByAddr::Request  &req, fkie_iop_msgs::QueryByAddr::Response &res);
-	bool pHasEndpoint(digital_resource_endpoint::DigitalResourceEndpoint &endpoint);
-
-};
+	bool pUpdateEndpointsSrv(const fkie_iop_msgs::srv::QueryByAddr::Request::SharedPtr req, fkie_iop_msgs::srv::QueryByAddr::Response::SharedPtr res);
+	bool pHasEndpoint(digital_resource_endpoint::DigitalResourceEndpoint& endpoint);
 
 };
+
+}
 
 #endif // DIGITALRESOURCEDISCOVERYCLIENT_RECEIVEFSM_H

@@ -34,15 +34,15 @@ along with this program; or you can read the full license at
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
 
-#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
-#include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 
 
 #include "PlatformMode_ReceiveFSM_sm.h"
-
-#include <ros/ros.h>
-#include <std_msgs/UInt8.h>
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
+#include <std_msgs/msg/u_int8.hpp>
 
 namespace urn_jaus_jss_iop_PlatformMode
 {
@@ -50,11 +50,12 @@ namespace urn_jaus_jss_iop_PlatformMode
 class DllExport PlatformMode_ReceiveFSM : public JTS::StateMachine
 {
 public:
-	PlatformMode_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM);
+	PlatformMode_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
 	virtual ~PlatformMode_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
 	virtual void setupNotifications();
+	virtual void setupIopConfiguration();
 
 	/// Action Methods
 	virtual void SendAction(std::string arg0, Receive::Body::ReceiveRec transportData);
@@ -68,21 +69,23 @@ public:
 	PlatformMode_ReceiveFSMContext *context;
 
 protected:
-    /// References to parent FSMs
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
-	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	/// References to parent FSMs
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
 
-	std::vector<int> p_supported_modes;
-	int platform_mode;
-	ros::Publisher p_pub_mode;
-	ros::Subscriber p_sub_mode;
+	std::shared_ptr<iop::Component> cmp;
+	rclcpp::Logger logger;
+	std::vector<uint8_t> p_supported_modes;
+	uint8_t platform_mode;
+	rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr p_pub_mode;
+	rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr p_sub_mode;
 
-	void pRosMode(const std_msgs::UInt8::ConstPtr& msg);
-	std::map<int, std::string> platform_mode_map();
+	void pRosMode(const std_msgs::msg::UInt8::SharedPtr msg);
+	std::map<uint8_t, std::string> platform_mode_map();
 
 };
 
-};
+}
 
 #endif // PLATFORMMODE_RECEIVEFSM_H

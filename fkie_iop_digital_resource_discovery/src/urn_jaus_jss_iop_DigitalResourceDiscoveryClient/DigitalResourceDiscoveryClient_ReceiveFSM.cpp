@@ -23,9 +23,9 @@ along with this program; or you can read the full license at
 #include <algorithm>
 
 #include "urn_jaus_jss_iop_DigitalResourceDiscoveryClient/DigitalResourceDiscoveryClient_ReceiveFSM.h"
+#include <fkie_iop_component/iop_component.hpp>
+#include <fkie_iop_component/iop_config.hpp>
 
-
-#include <ros/console.h>
 
 using namespace JTS;
 using namespace digital_resource_endpoint;
@@ -35,7 +35,8 @@ namespace urn_jaus_jss_iop_DigitalResourceDiscoveryClient
 
 
 
-DigitalResourceDiscoveryClient_ReceiveFSM::DigitalResourceDiscoveryClient_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM)
+DigitalResourceDiscoveryClient_ReceiveFSM::DigitalResourceDiscoveryClient_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("DigitalResourceDiscoveryClient"))
 {
 
 	/*
@@ -45,8 +46,9 @@ DigitalResourceDiscoveryClient_ReceiveFSM::DigitalResourceDiscoveryClient_Receiv
 	 */
 	context = new DigitalResourceDiscoveryClient_ReceiveFSMContext(*this);
 
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
 	this->pEventsClient_ReceiveFSM = pEventsClient_ReceiveFSM;
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->cmp = cmp;
 	p_request_id = 0;
 	p_enable_ros_interface = false;
 }
@@ -64,19 +66,23 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::setupNotifications()
 	pEventsClient_ReceiveFSM->registerNotification("Receiving", ieHandler, "InternalStateChange_To_DigitalResourceDiscoveryClient_ReceiveFSM_Receiving_Ready", "EventsClient_ReceiveFSM");
 	registerNotification("Receiving_Ready", pEventsClient_ReceiveFSM->getHandler(), "InternalStateChange_To_EventsClient_ReceiveFSM_Receiving_Ready", "DigitalResourceDiscoveryClient_ReceiveFSM");
 	registerNotification("Receiving", pEventsClient_ReceiveFSM->getHandler(), "InternalStateChange_To_EventsClient_ReceiveFSM_Receiving", "DigitalResourceDiscoveryClient_ReceiveFSM");
-	// p_pnh.param("enable_ros_interface", p_enable_ros_interface, p_enable_ros_interface);
-	// ROS_INFO_STREAM("[DigitalResourceDiscoveryClient] enable_ros_interface: " << p_enable_ros_interface);
+}
+
+
+void DigitalResourceDiscoveryClient_ReceiveFSM::setupIopConfiguration()
+{
+	iop::Config cfg(cmp, "DigitalResourceDiscoveryClient");
 	if (p_enable_ros_interface) {
-		p_pub_endoints = p_nh.advertise<fkie_iop_msgs::DigitalResourceEndpoints>("endpoints", 1, true);
-		p_srv_update_endpoints = p_nh.advertiseService("update_endpoints", &DigitalResourceDiscoveryClient_ReceiveFSM::pUpdateEndpointsSrv, this);
+		p_pub_endoints = cfg.create_publisher<fkie_iop_msgs::msg::DigitalResourceEndpoints>("endpoints", 1);
+		p_srv_update_endpoints = cfg.create_service<fkie_iop_msgs::srv::QueryByAddr>("update_endpoints", std::bind(&DigitalResourceDiscoveryClient_ReceiveFSM::pUpdateEndpointsSrv, this, std::placeholders::_1, std::placeholders::_2));
 	}
 }
 
-bool DigitalResourceDiscoveryClient_ReceiveFSM::pUpdateEndpointsSrv(fkie_iop_msgs::QueryByAddr::Request	&req, fkie_iop_msgs::QueryByAddr::Response &res)
+bool DigitalResourceDiscoveryClient_ReceiveFSM::pUpdateEndpointsSrv(const fkie_iop_msgs::srv::QueryByAddr::Request::SharedPtr req, fkie_iop_msgs::srv::QueryByAddr::Response::SharedPtr res)
 {
 	if (p_enable_ros_interface) {
-		ROS_DEBUG_NAMED("DigitalResourceDiscoveryClient", "update endpoints of %d.%d.%d", req.address.subsystem_id, req.address.node_id, req.address.component_id);
-		discoverEndpoints(JausAddress(req.address.subsystem_id, req.address.node_id, req.address.component_id));
+		RCLCPP_DEBUG(logger, "update endpoints of %d.%d.%d", req->address.subsystem_id, req->address.node_id, req->address.component_id);
+		discoverEndpoints(JausAddress(req->address.subsystem_id, req->address.node_id, req->address.component_id));
 		return true;
 	}
 	return false;
@@ -95,7 +101,7 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::confirmDigitalResourceEndpointAc
 			reg.request_id = server_id;
 			p_registered_endpoints.push_back(reg);
 			p_toregister_endpoints.erase(it);
-			ROS_INFO_NAMED("DigitalResourceDiscoveryClient", "registration for %s confirmed!", reg.server_url.c_str());
+			RCLCPP_INFO(logger, "registration for %s confirmed!", reg.server_url.c_str());
 			confirmed = true;
 			break;
 		}
@@ -105,13 +111,13 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::confirmDigitalResourceEndpointAc
 		if (it->request_id == request_id) {
 			DigitalResourceEndpoint reg = *it;
 			p_tounregister_endpoints.erase(it);
-			ROS_INFO_NAMED("DigitalResourceDiscoveryClient", "unregistration for %s confirmed!", reg.server_url.c_str());
+			RCLCPP_INFO(logger, "unregistration for %s confirmed!", reg.server_url.c_str());
 			confirmed = true;
 			break;
 		}
 	}
 	if (!confirmed) {
-		ROS_WARN_NAMED("DigitalResourceDiscoveryClient", "received confirmation for wrong request_id: %d", request_id);
+		RCLCPP_WARN(logger, "received confirmation for wrong request_id: %d", request_id);
 	}
 }
 
@@ -122,7 +128,7 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::reportDigitalResourceEndpointAct
 	uint8_t node_id = transportData.getSrcNodeID();
 	uint8_t component_id = transportData.getSrcComponentID();
 	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("DigitalResourceDiscoveryClient", "reportDigitalResourceEndpointAction from %d.%d.%d",
+	RCLCPP_DEBUG(logger, "reportDigitalResourceEndpointAction from %d.%d.%d",
 			subsystem_id, node_id, component_id);
 	ReportDigitalResourceEndpoint::Body::DigitalResourceEndpointList *endpoints = msg.getBody()->getDigitalResourceEndpointList();
 	std::vector<digital_resource_endpoint::DigitalResourceEndpoint> v_endpoints;
@@ -135,9 +141,9 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::reportDigitalResourceEndpointAct
 		endpoint.iop_id = JausAddress(ep->getJAUS_ID()->getSubsystemID(), ep->getJAUS_ID()->getNodeID(), ep->getJAUS_ID()->getComponentID());
 		v_endpoints.push_back(endpoint);
 	}
-	fkie_iop_msgs::DigitalResourceEndpoints ros_msg;
+	auto ros_msg = fkie_iop_msgs::msg::DigitalResourceEndpoints();
 	for (unsigned int i = 0; i < v_endpoints.size(); i++) {
-		fkie_iop_msgs::DigitalResourceEndpoint ep;
+		auto ep = fkie_iop_msgs::msg::DigitalResourceEndpoint();
 		ep.server_url = v_endpoints[i].server_url;
 		ep.server_type = v_endpoints[i].server_type;
 		ep.resource_id = v_endpoints[i].resource_id;
@@ -147,9 +153,9 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::reportDigitalResourceEndpointAct
 		ros_msg.endpoints.push_back(ep);
 	}
 	if (p_enable_ros_interface) {
-		p_pub_endoints.publish(ros_msg);
+		p_pub_endoints->publish(ros_msg);
 	}
-	if (!class_discovery_callback_.empty()) {
+	if (class_discovery_callback_ != nullptr) {
 		class_discovery_callback_(v_endpoints, sender);
 	}
 }
@@ -157,10 +163,10 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::reportDigitalResourceEndpointAct
 void DigitalResourceDiscoveryClient_ReceiveFSM::registerEndpoint(DigitalResourceEndpoint endpoint, const JausAddress digital_resource_discovery_service)
 {
 //	if (pHasEndpoint(endpoint)) {
-//		ROS_WARN_NAMED("DigitalResourceDiscoveryClient", "endpoint %s already registered, skip registration", endpoint.server_url.c_str());
+//		RCLCPP_WARN(logger, "endpoint %s already registered, skip registration", endpoint.server_url.c_str());
 //		return;
 //	}
-	ROS_INFO_NAMED("DigitalResourceDiscoveryClient", "register endpoint: %s", endpoint.server_url.c_str());
+	RCLCPP_INFO(logger, "register endpoint: %s", endpoint.server_url.c_str());
 	// register the digital video endpoint by DigitalResourceDiscovery service
 	RegisterDigitalResourceEndpoint msg;
 	endpoint.request_id = p_request_id;
@@ -186,10 +192,10 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::unregisterEndpoint(DigitalResour
 {
 	std::deque<DigitalResourceEndpoint>::iterator deg = std::find(p_registered_endpoints.begin(), p_registered_endpoints.end(), endpoint);
 	if (deg == p_registered_endpoints.end()) {
-		ROS_WARN_NAMED("DigitalResourceDiscoveryClient", "endpoint %s is not registered, skip unregistration", endpoint.server_url.c_str());
+		RCLCPP_WARN(logger, "endpoint %s is not registered, skip unregistration", endpoint.server_url.c_str());
 		return;
 	}
-	ROS_INFO_NAMED("DigitalResourceDiscoveryClient", "unregister endpoint: %s", endpoint.server_url.c_str());
+	RCLCPP_INFO(logger, "unregister endpoint: %s", endpoint.server_url.c_str());
 	// unregister the digital video endpoint by DigitalResourceDiscovery service
 	RemoveDigitalResourceEndpoint msg;
 	msg.getBody()->getRemoveDigitalResourceEndpointRec()->setID(deg->request_id);
@@ -207,10 +213,10 @@ void DigitalResourceDiscoveryClient_ReceiveFSM::discoverEndpoints(const JausAddr
 	sendJausMessage(qmsg, digital_resource_discovery_service);
 }
 
-bool DigitalResourceDiscoveryClient_ReceiveFSM::pHasEndpoint(DigitalResourceEndpoint &endpoint)
+bool DigitalResourceDiscoveryClient_ReceiveFSM::pHasEndpoint(digital_resource_endpoint::DigitalResourceEndpoint &endpoint)
 {
 	return (std::find(p_registered_endpoints.begin(), p_registered_endpoints.end(), endpoint) != p_registered_endpoints.end());
 }
 
 
-};
+}
