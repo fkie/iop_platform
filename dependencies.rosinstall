@@ -4,7 +4,7 @@
     version: foxy-devel
 
 - git:
-    local-name: iop_msgs
+    local-name: iop_core
     uri: https://github.com/fkie/iop_core
     version: foxy-devel
 
