@@ -199,7 +199,7 @@ void HandoffController_ReceiveFSM::processReportHandoffTimeoutAction(ReportHando
 void HandoffController_ReceiveFSM::p_subscribe_accesscontrolclient()
 {
 	if (p_accesscontrol_client == nullptr) {
-		AccessControlClientService *accesscontrol_srv = static_cast<AccessControlClientService*>(cmp->get_service("AccessControlClient"));
+		AccessControlClientService *accesscontrol_srv = static_cast<AccessControlClientService*>(cmp->get_service("AccessControlClientService"));
 		if (accesscontrol_srv != NULL) {
 			p_accesscontrol_client = accesscontrol_srv->pAccessControlClient_ReceiveFSM;
 			p_accesscontrol_client->add_reply_handler(&HandoffController_ReceiveFSM::p_accesscontrolclient_reply_handler, this);

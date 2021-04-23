@@ -80,7 +80,7 @@ void PlatformState_ReceiveFSM::setupIopConfiguration()
 		"Default state on start.",
 		"Default: 1; 0:initialize, 1:operational, 2:shutdown, 3:system_abort, 4:emergency, 5:render_useless");
 	cfg.declare_param<std::vector<std::string> >("supported_states", p_supported_states, true,
-		rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER_ARRAY,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
 		"A list with supported states.",
 		"Default: [OPERATIONAL, EMERGENCY]; Possible entries: initialize, operational, shutdown, system_abort, emergency, render_useless");
 
@@ -118,7 +118,7 @@ void PlatformState_ReceiveFSM::setupIopConfiguration()
 Discovery_ReceiveFSM* PlatformState_ReceiveFSM::p_get_discovery()
 {
 	if (p_discovery_srv == NULL) {
-		DiscoveryService *discovery_srv = static_cast<DiscoveryService*>(cmp->get_service("Discovery"));
+		DiscoveryService *discovery_srv = static_cast<DiscoveryService*>(cmp->get_service("DiscoveryService"));
 		if (discovery_srv != NULL) {
 			p_discovery_srv = discovery_srv->pDiscovery_ReceiveFSM;
 		} else {
