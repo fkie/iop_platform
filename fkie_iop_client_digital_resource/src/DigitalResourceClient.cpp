@@ -34,7 +34,7 @@ using namespace urn_jaus_jss_core_EventsClient;
 using namespace urn_jaus_jss_iop_DigitalResourceDiscoveryClient;
 
 DigitalResourceClient::DigitalResourceClient()
-: p_query_timer(std::chrono::seconds(1), std::bind(&DigitalResourceClient::pQueryCallback, this), false)
+: SlaveHandlerInterface(cmp, "DigitalResourceClientService", 1.0)
 {
 
 	p_initialized = false;
@@ -47,7 +47,6 @@ DigitalResourceClient::DigitalResourceClient()
 	this->m_name_inherits_from = "DigitalResourceDiscoveryClientService";
 	this->m_inherits_from_version_manjor = 1;
 	this->m_inherits_from_min_version_minor = 1;
-	has_access = false;
 }
 
 DigitalResourceClient::~DigitalResourceClient()
@@ -81,8 +80,12 @@ void DigitalResourceClient::run()
 	iop::Config cfg(p_cmp, "DigitalResourceClient");
 	p_pub_endoints = cfg.create_publisher<fkie_iop_msgs::msg::DigitalResourceEndpoints>("digital_endpoints", 10);
 	pParentService->pDigitalResourceDiscoveryClient_ReceiveFSM->set_discovery_handler(&DigitalResourceClient::p_discovered_endpoints, this);
-	p_cmp->get_slave()->add_supported_service(*this, "urn:jaus:jss:iop:DigitalResourceDiscovery", 1, 255);
 
+	// initialize the control layer, which handles the access control staff
+	this->set_rate(p_hz);
+	this->set_supported_service(*this, "urn:jaus:jss:iop:DigitalResourceDiscovery", 1, 255);
+	this->set_event_name("update endpoints");
+	this->set_query_before_event(true, 1.0);
 	/// Kick-off the receive loop...
 	EventReceiver::run();
 }
@@ -96,51 +99,36 @@ bool DigitalResourceClient::defaultTransitions(JTS::InternalEvent* /* ie */)
 	return false;
 }
 
-void DigitalResourceClient::control_allowed(std::string service_uri, JausAddress component, unsigned char /* authority */)
-{
-	if (service_uri.compare("urn:jaus:jss:iop:DigitalResourceDiscovery") == 0) {
-		has_access = true;
-		p_remote_addr = component;
-	} else {
-		RCLCPP_WARN(p_cmp->get_logger().get_child("DigitalResourceClient"), "unexpected control allowed for %s received, ignored!", service_uri.c_str());
-	}
-}
 
-void DigitalResourceClient::enable_monitoring_only(std::string /* service_uri */, JausAddress component)
+void DigitalResourceClient::access_deactivated(std::string service_uri, JausAddress component)
 {
-	p_remote_addr = component;
-}
-
-void DigitalResourceClient::access_deactivated(std::string /* service_uri */, JausAddress /* component */)
-{
-	p_remote_addr = JausAddress(0);
+	SlaveHandlerInterface::access_deactivated(service_uri, component);
 	auto ros_msg = fkie_iop_msgs::msg::DigitalResourceEndpoints();
 	p_pub_endoints->publish(ros_msg);
 }
 
-void DigitalResourceClient::create_events(std::string /* service_uri */, JausAddress component, bool /* by_query */)
+void DigitalResourceClient::register_events(JausAddress /* remote_addr */, double /* hz */)
 {
-	RCLCPP_INFO(p_cmp->get_logger().get_child("DigitalResourceClient"), "create QUERY timer to update endpoints from %d.%d.%d",
-			component.getSubsystemID(), component.getNodeID(), component.getComponentID());
-	p_query_timer.start();
 }
 
-void DigitalResourceClient::cancel_events(std::string /* service_uri */, JausAddress /* component */, bool /* by_query */)
+void DigitalResourceClient::unregister_events(JausAddress remote_addr)
 {
-	p_query_timer.stop();
+	stop_query(remote_addr);
 }
 
-void DigitalResourceClient::pQueryCallback()
+void DigitalResourceClient::send_query(JausAddress remote_addr)
 {
-	if (p_remote_addr.get() != 0) {
-		RCLCPP_INFO(p_cmp->get_logger().get_child("DigitalResourceClient"), "update endpoints for %s", p_remote_addr.str().c_str());
-		pParentService->pDigitalResourceDiscoveryClient_ReceiveFSM->discoverEndpoints(p_remote_addr);
-	}
+	pParentService->pDigitalResourceDiscoveryClient_ReceiveFSM->discoverEndpoints(remote_addr);
+}
+
+void DigitalResourceClient::stop_query(JausAddress /* remote_addr */)
+{
+	this->set_query_before_event(true, 1.0);
 }
 
 void DigitalResourceClient::p_discovered_endpoints(std::vector<digital_resource_endpoint::DigitalResourceEndpoint> endpoints, JausAddress& /* address */)
 {
-	p_query_timer.stop();
+	this->set_query_before_event(false);
 	auto ros_msg = fkie_iop_msgs::msg::DigitalResourceEndpoints();
 	for (unsigned int i = 0; i < endpoints.size(); i++) {
 		auto ep = fkie_iop_msgs::msg::DigitalResourceEndpoint();

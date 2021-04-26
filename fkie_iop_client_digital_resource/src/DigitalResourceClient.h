@@ -53,25 +53,20 @@ public:
 	virtual bool defaultTransitions(JTS::InternalEvent* ie);
 
 	/// SlaveHandlerInterface Methods
-	void control_allowed(std::string service_uri, JausAddress component, unsigned char authority);
-	void enable_monitoring_only(std::string service_uri, JausAddress component);
+	void register_events(JausAddress remote_addr, double hz);
+	void unregister_events(JausAddress remote_addr);
+	void send_query(JausAddress remote_addr);
+	void stop_query(JausAddress remote_addr);
 	void access_deactivated(std::string service_uri, JausAddress component);
-	void create_events(std::string service_uri, JausAddress component, bool by_query=false);
-	void cancel_events(std::string service_uri, JausAddress component, bool by_query=false);
 
 protected:
 	JTS::JausRouter* jausRouter;
 	urn_jaus_jss_iop_DigitalResourceDiscoveryClient::DigitalResourceDiscoveryClientService* pParentService;
 	std::shared_ptr<iop::Component> p_cmp;
 
-	iop::Timer p_query_timer;
 	rclcpp::Publisher<fkie_iop_msgs::msg::DigitalResourceEndpoints>::SharedPtr p_pub_endoints;
-	JausAddress p_remote_addr;
-	bool has_access;
-
 	virtual void run();
 	void p_discovered_endpoints(std::vector<digital_resource_endpoint::DigitalResourceEndpoint>, JausAddress &);
-	void pQueryCallback();
 
 };
 

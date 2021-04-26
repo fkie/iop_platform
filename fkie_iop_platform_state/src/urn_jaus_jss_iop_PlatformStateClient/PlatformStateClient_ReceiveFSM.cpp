@@ -23,7 +23,6 @@ along with this program; or you can read the full license at
 
 #include "urn_jaus_jss_iop_PlatformStateClient/PlatformStateClient_ReceiveFSM.h"
 #include <fkie_iop_component/iop_config.hpp>
-#include <fkie_iop_ocu_slavelib/Slave.h>
 
 
 using namespace JTS;
@@ -32,8 +31,8 @@ namespace urn_jaus_jss_iop_PlatformStateClient
 {
 
 PlatformStateClient_ReceiveFSM::PlatformStateClient_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
-: logger(cmp->get_logger().get_child("PlatformStateClient")),
-  p_query_timer(std::chrono::seconds(10), std::bind(&PlatformStateClient_ReceiveFSM::pQueryCallback, this), false)
+: SlaveHandlerInterface(cmp, "PlatformStateClient", 10.0),
+  logger(cmp->get_logger().get_child("PlatformStateClient"))
 {
 
 	/*
@@ -55,7 +54,6 @@ PlatformStateClient_ReceiveFSM::PlatformStateClient_ReceiveFSM(std::shared_ptr<i
 
 PlatformStateClient_ReceiveFSM::~PlatformStateClient_ReceiveFSM()
 {
-	p_query_timer.stop();
 	delete context;
 }
 
@@ -77,67 +75,32 @@ void PlatformStateClient_ReceiveFSM::setupIopConfiguration()
 	p_sub_state_str = cfg.create_subscription<std_msgs::msg::String>("cmd_platform_state_str", 1, std::bind(&PlatformStateClient_ReceiveFSM::pRosNewCmdStateStr, this, std::placeholders::_1));
 	p_pub_state = cfg.create_publisher<std_msgs::msg::UInt8>("platform_state", 10);
 	p_pub_state_str = cfg.create_publisher<std_msgs::msg::String>("platform_state_str", 10);
-	std::shared_ptr<iop::ocu::Slave> slave = iop::ocu::Slave::get_instance(cmp);
-	slave->add_supported_service(*this, "urn:jaus:jss:iop:PlatformState", 1, 255);
-
+	// initialize the control layer, which handles the access control staff
+	this->set_rate(p_hz);
+	this->set_supported_service(*this, "urn:jaus:jss:iop:PlatformState", 1, 255);
+	this->set_event_name("platform state");
 }
 
-void PlatformStateClient_ReceiveFSM::control_allowed(std::string service_uri, JausAddress component, unsigned char authority)
+void PlatformStateClient_ReceiveFSM::register_events(JausAddress remote_addr, double hz)
 {
-	if (service_uri.compare("urn:jaus:jss:iop:PlatformState") == 0) {
-		p_has_access = true;
-		p_remote_addr = component;
-	} else {
-		RCLCPP_WARN(logger, "unexpected control allowed for %s received, ignored!", service_uri.c_str());
-	}
+	pEventsClient_ReceiveFSM->create_event(*this, remote_addr, p_query_platform_state_msg, p_hz);
 }
 
-void PlatformStateClient_ReceiveFSM::enable_monitoring_only(std::string service_uri, JausAddress component)
+void PlatformStateClient_ReceiveFSM::unregister_events(JausAddress remote_addr)
 {
-	p_remote_addr = component;
+	pEventsClient_ReceiveFSM->cancel_event(*this, remote_addr, p_query_platform_state_msg);
+	stop_query(remote_addr);
 }
 
-void PlatformStateClient_ReceiveFSM::access_deactivated(std::string service_uri, JausAddress component)
+void PlatformStateClient_ReceiveFSM::send_query(JausAddress remote_addr)
 {
-	p_remote_addr = JausAddress(0);
-	p_has_access = false;
+	sendJausMessage(p_query_platform_state_msg, remote_addr);
+}
+
+void PlatformStateClient_ReceiveFSM::stop_query(JausAddress remote_addr)
+{
 	p_state = PLATFORM_STATE_UNKNOWN;
 	p_publish_state(p_state);
-}
-
-void PlatformStateClient_ReceiveFSM::create_events(std::string service_uri, JausAddress component, bool by_query)
-{
-	if (by_query) {
-		if (p_hz > 0) {
-			RCLCPP_INFO(logger, "create QUERY timer to get platform state from %s", component.str().c_str());
-			p_query_timer.set_rate(p_hz);
-			p_query_timer.start();
-		} else {
-			RCLCPP_WARN(logger, "invalid hz %.2f for QUERY timer to get platform state from %s", p_hz, component.str().c_str());
-			RCLCPP_INFO(logger, "create EVENT to get platform state from %s", component.str().c_str());
-			pEventsClient_ReceiveFSM->create_event(*this, component, p_query_platform_state_msg, p_hz);
-		}
-	} else {
-		RCLCPP_INFO(logger, "create EVENT to get platform state from %s", component.str().c_str());
-		pEventsClient_ReceiveFSM->create_event(*this, component, p_query_platform_state_msg, p_hz);
-	}
-}
-
-void PlatformStateClient_ReceiveFSM::cancel_events(std::string service_uri, JausAddress component, bool by_query)
-{
-	if (by_query) {
-		p_query_timer.stop();
-	} else {
-		RCLCPP_INFO(logger, "cancel EVENT for platform state by %s", component.str().c_str());
-		pEventsClient_ReceiveFSM->cancel_event(*this, component, p_query_platform_state_msg);
-	}
-}
-
-void PlatformStateClient_ReceiveFSM::pQueryCallback()
-{
-	if (p_remote_addr.get() != 0) {
-		sendJausMessage(p_query_platform_state_msg, p_remote_addr);
-	}
 }
 
 void PlatformStateClient_ReceiveFSM::event(JausAddress sender, unsigned short query_msg_id, unsigned int reportlen, const unsigned char* reportdata)
@@ -198,7 +161,7 @@ void PlatformStateClient_ReceiveFSM::set_state(JausAddress address, unsigned cha
 
 void PlatformStateClient_ReceiveFSM::pRosNewCmdState(const std_msgs::msg::UInt8::SharedPtr msg)
 {
-	if ((p_has_access || msg->data == OPERATIONAL) && p_remote_addr.get() != 0) {
+	if ((has_access() || msg->data == OPERATIONAL) && has_remote_addr()) {
 		RCLCPP_DEBUG(logger, "set new state (%d) '%s'", msg->data, p_state2str(msg->data).c_str());
 		set_state(p_remote_addr, msg->data);
 	} else {
@@ -209,7 +172,7 @@ void PlatformStateClient_ReceiveFSM::pRosNewCmdState(const std_msgs::msg::UInt8:
 void PlatformStateClient_ReceiveFSM::pRosNewCmdStateStr(const std_msgs::msg::String::SharedPtr msg)
 {
 	int state = p_state2int(msg->data);
-	if ((p_has_access || state == OPERATIONAL) && p_remote_addr.get() != 0) {
+	if ((has_access() || state == OPERATIONAL) && has_remote_addr()) {
 		RCLCPP_DEBUG(logger, "set new state '%s'(%d)", msg->data.c_str(), state);
 		set_state(p_remote_addr, state);
 	} else {

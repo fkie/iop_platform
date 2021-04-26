@@ -50,7 +50,6 @@ along with this program; or you can read the full license at
 #include <std_msgs/msg/u_int8.hpp>
 #include <fkie_iop_ocu_slavelib/SlaveHandlerInterface.h>
 #include <fkie_iop_events/EventHandlerInterface.h>
-#include <fkie_iop_component/timer.hpp>
 
 namespace urn_jaus_jss_iop_PlatformStateClient
 {
@@ -103,12 +102,10 @@ public:
 	void event(JausAddress reporter, unsigned short query_msg_id, unsigned int reportlen, const unsigned char* reportdata);
 
 	/// SlaveHandlerInterface Methods
-	void control_allowed(std::string service_uri, JausAddress component, unsigned char authority);
-	void enable_monitoring_only(std::string service_uri, JausAddress component);
-	void access_deactivated(std::string service_uri, JausAddress component);
-	void create_events(std::string service_uri, JausAddress component, bool by_query=false);
-	void cancel_events(std::string service_uri, JausAddress component, bool by_query=false);
-
+	void register_events(JausAddress remote_addr, double hz);
+	void unregister_events(JausAddress remote_addr);
+	void send_query(JausAddress remote_addr);
+	void stop_query(JausAddress remote_addr);
 
 	PlatformStateClient_ReceiveFSMContext *context;
 
@@ -121,7 +118,6 @@ protected:
 
 	std::shared_ptr<iop::Component> cmp;
 	rclcpp::Logger logger;
-	iop::Timer p_query_timer;
 
 	std::function<void (JausAddress &, unsigned char state)> p_class_interface_callback;
 	rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr p_sub_state;
@@ -130,15 +126,10 @@ protected:
 	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr p_pub_state_str;
 	int p_state;
 	double p_hz;
-	bool p_has_access;
-
-	JausAddress p_remote_addr;
 	QueryPlatformState p_query_platform_state_msg;
-
 
 	void pRosNewCmdState(const std_msgs::msg::UInt8::SharedPtr msg);
 	void pRosNewCmdStateStr(const std_msgs::msg::String::SharedPtr msg);
-	void pQueryCallback();
 	void p_publish_state(int state);
 	std::string p_state2str(int state);
 	int p_state2int(std::string state);
