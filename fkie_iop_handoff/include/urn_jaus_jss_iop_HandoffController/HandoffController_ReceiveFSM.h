@@ -63,7 +63,7 @@ protected:
 
 	JausAddress p_remote_addr;
 	ros::NodeHandle p_nh;
-	ros::Timer p_timeout_timer;
+	ros::WallTimer p_timeout_timer;
 	ros::Subscriber p_sub_handoff_request;
 	ros::Subscriber p_sub_handoff_response;
 	ros::Publisher p_pub_handoff_response;
@@ -84,7 +84,7 @@ protected:
 	void p_ros_handoff_response(const fkie_iop_msgs::HandoffResponse::ConstPtr msg);
 
 	std::string p_code2str(unsigned char code);
-	void p_timeout(const ros::TimerEvent& event);
+	void p_timeout(const ros::WallTimerEvent& event);
 	void p_update_handoff_requests();
 
 	template<class T>

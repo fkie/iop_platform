@@ -52,10 +52,10 @@ protected:
 
 	double p_hz;
 	ros::NodeHandle p_nh;
-	ros::Timer p_timeout_timer;
+	ros::WallTimer p_timeout_timer;
 	JTS::InternalEvent *p_timeout_event;
 	JausAddress p_destination;
-	void p_timeout(const ros::TimerEvent& event);
+	void p_timeout(const ros::WallTimerEvent& event);
 };
 
 };

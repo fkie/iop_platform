@@ -47,7 +47,7 @@ void UnsolicitedHeartbeat_ReceiveFSM::setupNotifications()
 	iop::Config cfg("~UnsolicitedHeartbeat");
 	cfg.param("hz", p_hz, p_hz);
 	if (p_hz > 0) {
-		p_timeout_timer = p_nh.createTimer(ros::Duration(1.0 / p_hz), &UnsolicitedHeartbeat_ReceiveFSM::p_timeout, this);
+		p_timeout_timer = p_nh.createWallTimer(ros::WallDuration(1.0 / p_hz), &UnsolicitedHeartbeat_ReceiveFSM::p_timeout, this, false, false);
 	} else {
 		ROS_INFO_NAMED("UnsolicitedHeartbeat", "periodic heartbeat disabled");
 	}
@@ -67,7 +67,7 @@ bool UnsolicitedHeartbeat_ReceiveFSM::hasJAUS_ID()
 	return p_destination.get() != 0;
 }
 
-void UnsolicitedHeartbeat_ReceiveFSM::p_timeout(const ros::TimerEvent& event)
+void UnsolicitedHeartbeat_ReceiveFSM::p_timeout(const ros::WallTimerEvent& event)
 {
 	this->getHandler()->invoke(p_timeout_event);
 	// create a new event, since the InternalEventHandler deletes the given.

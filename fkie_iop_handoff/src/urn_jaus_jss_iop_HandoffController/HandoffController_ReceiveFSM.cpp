@@ -64,9 +64,9 @@ void HandoffController_ReceiveFSM::setupNotifications()
 	slave.set_supported_handoff(true);
 	p_subscribe_accesscontrolclient();
 	if (p_auto_request && p_enhanced_timeout > 0) {
-		p_timeout_timer = p_nh.createTimer(ros::Duration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this);
+		p_timeout_timer = p_nh.createWallTimer(ros::WallDuration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this, false, false);
 	} else {
-		p_timeout_timer = p_nh.createTimer(ros::Duration(10), &HandoffController_ReceiveFSM::p_timeout, this);
+		p_timeout_timer = p_nh.createWallTimer(ros::WallDuration(10), &HandoffController_ReceiveFSM::p_timeout, this, false, false);
 	}
 }
 
@@ -161,7 +161,7 @@ void HandoffController_ReceiveFSM::processReportEnhancedTimeoutAction(ReportEnha
 		p_timeout_timer.stop();
 		if (p_enhanced_timeout != 0) {
 			ROS_DEBUG_NAMED("HandoffController", "create timer with new period %.2f", p_enhanced_timeout / 3.0);
-			p_timeout_timer = p_nh.createTimer(ros::Duration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this);
+			p_timeout_timer = p_nh.createWallTimer(ros::WallDuration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this, false, false);
 		}
 	}
 }
@@ -222,7 +222,7 @@ void HandoffController_ReceiveFSM::p_ros_handoff_request(const fkie_iop_msgs::Ha
 		p_update_handoff_requests();
 		if (p_enhanced_timeout != 0) {
 			ROS_DEBUG_NAMED("HandoffController", "create timer with new period %.2f", p_enhanced_timeout / 3.0);
-			p_timeout_timer = p_nh.createTimer(ros::Duration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this);
+			p_timeout_timer = p_nh.createWallTimer(ros::WallDuration(p_enhanced_timeout / 3.0), &HandoffController_ReceiveFSM::p_timeout, this, false, false);
 		}
 	} else {
 		ROS_DEBUG_NAMED("HandoffController", "received request to cancel handoff requests, stop timer. No RemoveHandoffRequest is send!");
@@ -279,7 +279,7 @@ std::string HandoffController_ReceiveFSM::p_code2str(unsigned char code)
 	return result;
 }
 
-void HandoffController_ReceiveFSM::p_timeout(const ros::TimerEvent& event)
+void HandoffController_ReceiveFSM::p_timeout(const ros::WallTimerEvent& event)
 {
 	p_update_handoff_requests();
 }
