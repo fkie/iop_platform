@@ -75,6 +75,8 @@ void DigitalResourceDiscovery_ReceiveFSM::setupIopConfiguration()
 		"Default: 5 sec");
 	cfg.param<int64_t>("delay_first_response", p_delay_first_response, p_delay_first_response, true);
 	p_start_time = iop::Component::now_secs();
+	pEvents_ReceiveFSM->get_event_handler().register_query(QueryDigitalResourceEndpoint::ID);
+	pEvents_ReceiveFSM->get_event_handler().set_report(QueryDigitalResourceEndpoint::ID, &p_report_digital_resource_endpoint);
 }
 
 void DigitalResourceDiscovery_ReceiveFSM::addAndConfirmDigitalResourceEndpointAction(RegisterDigitalResourceEndpoint msg, Receive::Body::ReceiveRec transportData)
@@ -100,6 +102,7 @@ void DigitalResourceDiscovery_ReceiveFSM::addAndConfirmDigitalResourceEndpointAc
 		confirm_msg.getBody()->getConfirmDigitalResourceEndpointRec()->setID(index_id);
 		confirm_msg.getBody()->getConfirmDigitalResourceEndpointRec()->setRequestID(request_id);
 		sendJausMessage( confirm_msg, sender );
+		p_update_report();
 	}
 }
 
@@ -119,6 +122,7 @@ void DigitalResourceDiscovery_ReceiveFSM::removeAndConfirmDigitalResourceEndpoin
 		confirm_msg.getBody()->getConfirmDigitalResourceEndpointRec()->setRequestID(request_id);
 		p_known_endpoints.erase(it);
 		sendJausMessage( confirm_msg, sender );
+		p_update_report();
 	}
 }
 
@@ -180,6 +184,27 @@ unsigned char DigitalResourceDiscovery_ReceiveFSM::pGetFreeID()
 		}
 	}
 	return result;
+}
+
+void DigitalResourceDiscovery_ReceiveFSM::p_update_report()
+{
+	while (p_report_digital_resource_endpoint.getBody()->getDigitalResourceEndpointList()->getNumberOfElements() > 0) {
+		p_report_digital_resource_endpoint.getBody()->getDigitalResourceEndpointList()->deleteLastElement();
+	}
+	std::map<unsigned char, DigitalResourceEndpoint>::iterator it;
+	for (it = p_known_endpoints.begin(); it != p_known_endpoints.end(); it++) {
+		ReportDigitalResourceEndpoint::Body::DigitalResourceEndpointList::DigitalResourceEndpointRec rpoint;
+		rpoint.setServerType(it->second.server_type);
+		rpoint.setServerURL(it->second.server_url);
+		rpoint.setResourceID(it->second.resource_id);
+		ReportDigitalResourceEndpoint::Body::DigitalResourceEndpointList::DigitalResourceEndpointRec::JAUS_ID iop_id_rec;
+		iop_id_rec.setSubsystemID(it->second.iop_id.getSubsystemID());
+		iop_id_rec.setNodeID(it->second.iop_id.getNodeID());
+		iop_id_rec.setComponentID(it->second.iop_id.getComponentID());
+		rpoint.setJAUS_ID(iop_id_rec);
+		p_report_digital_resource_endpoint.getBody()->getDigitalResourceEndpointList()->addElement(rpoint);
+	}
+	pEvents_ReceiveFSM->get_event_handler().set_report(QueryDigitalResourceEndpoint::ID, &p_report_digital_resource_endpoint);
 }
 
 }

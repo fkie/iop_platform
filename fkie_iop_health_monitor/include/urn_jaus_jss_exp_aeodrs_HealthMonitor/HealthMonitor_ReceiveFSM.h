@@ -78,6 +78,7 @@ protected:
 
 	std::shared_ptr<iop::Component> cmp;
 	rclcpp::Logger logger;
+	ReportUGVSummary p_report_ugv_summary;
 
 };
 

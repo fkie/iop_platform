@@ -76,12 +76,14 @@ protected:
 
 	std::shared_ptr<iop::Component> cmp;
 	rclcpp::Logger logger;
+	ReportDigitalResourceEndpoint p_report_digital_resource_endpoint;
 	std::map<unsigned char, digital_resource_endpoint::DigitalResourceEndpoint> p_known_endpoints;
 	bool pHasEndpoint(digital_resource_endpoint::DigitalResourceEndpoint endpoint);
 	unsigned char pGetFreeID();
 	unsigned char pGetEndpointById(JausAddress iop_id, unsigned short int resource_id);
 	int64_t p_delay_first_response;
 	int64_t p_start_time;
+	void p_update_report();
 };
 
 }

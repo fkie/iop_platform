@@ -72,6 +72,9 @@ void HealthMonitor_ReceiveFSM::setupNotifications()
 void HealthMonitor_ReceiveFSM::setupIopConfiguration()
 {
 	// iop::Config cfg(cmp, "HealthMonitor");
+	pEvents_ReceiveFSM->get_event_handler().register_query(QueryUGVSummary::ID);
+	p_report_ugv_summary.getBody()->getUGVHealthSummarySequence()->getUGVSeverityRec()->setSeverity(0);
+	pEvents_ReceiveFSM->get_event_handler().set_report(QueryUGVSummary::ID, &p_report_ugv_summary);
 }
 
 void HealthMonitor_ReceiveFSM::sendReportUGVSummaryAction(QueryUGVSummary msg, Receive::Body::ReceiveRec transportData)
@@ -81,11 +84,9 @@ void HealthMonitor_ReceiveFSM::sendReportUGVSummaryAction(QueryUGVSummary msg, R
 	uint8_t node_id = transportData.getSrcNodeID();
 	uint8_t component_id = transportData.getSrcComponentID();
 	JausAddress sender(subsystem_id, node_id, component_id);
-	std::string state_str("Operational");
 	RCLCPP_DEBUG(logger, "sendReportUGVSummary to %d.%d.%d", subsystem_id, node_id, component_id);
-	ReportUGVSummary report;
 	// TODO subscribe to /rosout and forward all errors warnings
-	sendJausMessage( report, sender );
+	sendJausMessage( p_report_ugv_summary, sender );
 }
 
 void HealthMonitor_ReceiveFSM::updateUGVSummaryAction(UpdateUGVSummary msg, Receive::Body::ReceiveRec transportData)

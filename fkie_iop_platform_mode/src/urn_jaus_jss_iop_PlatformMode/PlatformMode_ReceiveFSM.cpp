@@ -88,6 +88,10 @@ void PlatformMode_ReceiveFSM::setupIopConfiguration()
 	if (p_supported_modes.size() == 0) {
 		p_supported_modes.push_back(0);
 	}
+	p_report_platformmode.getBody()->getReportPlatformModeRec()->setStatus(1);  // 0="Initializing", 1="Active", 2="Exiting"
+	p_report_platformmode.getBody()->getReportPlatformModeRec()->setPlatformMode(platform_mode);
+	pEvents_ReceiveFSM->get_event_handler().register_query(QueryPlatformMode::ID);
+	pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformMode::ID, &p_report_platformmode);
 	p_pub_mode = cfg.create_publisher<std_msgs::msg::UInt8>("platform_mode", 5);
 	auto rosmsg = std_msgs::msg::UInt8();
 	rosmsg.data = platform_mode;
@@ -107,7 +111,7 @@ std::map<uint8_t, std::string> PlatformMode_ReceiveFSM::platform_mode_map()
 
 void PlatformMode_ReceiveFSM::pRosMode(const std_msgs::msg::UInt8::SharedPtr msg)
 {
-	platform_mode = msg->data;
+	updatePlatformMode(msg->data);
 }
 
 void PlatformMode_ReceiveFSM::SendAction(std::string arg0, Receive::Body::ReceiveRec transportData)
@@ -116,15 +120,9 @@ void PlatformMode_ReceiveFSM::SendAction(std::string arg0, Receive::Body::Receiv
 	uint8_t node_id = transportData.getSrcNodeID();
 	uint8_t component_id = transportData.getSrcComponentID();
 	JausAddress sender(subsystem_id, node_id, component_id);
-	int mode_status;
-	ReportPlatformMode response;
-	ReportPlatformMode::Body::ReportPlatformModeRec comp;
 	if(strcmp(arg0.c_str(), "ReportPlatformMode") == 0)
 	{
-		comp.setStatus(1);  // 0="Initializing", 1="Active", 2="Exiting"
-		comp.setPlatformMode(platform_mode);
-		response.getBody()->setReportPlatformModeRec(comp);
-		sendJausMessage(response, sender);
+		sendJausMessage(p_report_platformmode, sender);
 	}
 	else if	(strcmp(arg0.c_str(),"ReportSupportedPlatformModes") == 0)
 	{
@@ -140,10 +138,19 @@ void PlatformMode_ReceiveFSM::SendAction(std::string arg0, Receive::Body::Receiv
 
 void PlatformMode_ReceiveFSM::SetPlatformModeAction(SetPlatformMode msg,Receive::Body::ReceiveRec transportData)
 {
-	platform_mode =  msg.getBody()->getPlatformModeRec()->getPlatformMode();
+	updatePlatformMode(msg.getBody()->getPlatformModeRec()->getPlatformMode());
 	auto rosmsg = std_msgs::msg::UInt8();
 	rosmsg.data = platform_mode;
 	p_pub_mode->publish(rosmsg);
+}
+
+void PlatformMode_ReceiveFSM::updatePlatformMode(uint8_t mode)
+{
+	if (platform_mode != mode) {
+		platform_mode = mode;
+		p_report_platformmode.getBody()->getReportPlatformModeRec()->setPlatformMode(platform_mode);
+		pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformMode::ID, &p_report_platformmode);
+	}
 }
 
 bool PlatformMode_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec transportData)

@@ -65,7 +65,7 @@ public:
 	/// Guard Methods
 	virtual bool isControllingClient(Receive::Body::ReceiveRec transportData);
 
-
+	void updatePlatformMode(uint8_t mode);
 	PlatformMode_ReceiveFSMContext *context;
 
 protected:
@@ -76,6 +76,7 @@ protected:
 
 	std::shared_ptr<iop::Component> cmp;
 	rclcpp::Logger logger;
+	ReportPlatformMode p_report_platformmode;
 	std::vector<uint8_t> p_supported_modes;
 	uint8_t platform_mode;
 	rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr p_pub_mode;
