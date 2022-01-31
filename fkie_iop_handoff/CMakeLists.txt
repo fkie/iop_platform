@@ -1,9 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 project(fkie_iop_handoff)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+# set default c++ version
+if($ENV{ROS_DISTRO} MATCHES "foxy")
+  if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 14)
+  endif()
+elseif($ENV{ROS_DISTRO} MATCHES "galactic")
+  if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+  endif()
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
