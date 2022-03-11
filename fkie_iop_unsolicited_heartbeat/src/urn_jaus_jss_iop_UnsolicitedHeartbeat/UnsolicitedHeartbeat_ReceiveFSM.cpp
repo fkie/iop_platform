@@ -25,7 +25,7 @@ UnsolicitedHeartbeat_ReceiveFSM::UnsolicitedHeartbeat_ReceiveFSM(urn_jaus_jss_co
 	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
 	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pLiveness_ReceiveFSM = pLiveness_ReceiveFSM;
-	p_timeout_event = new InternalEvent("PeriodicTimerTrigger", "PeriodicTimeout");
+	p_timeout_event = new InternalEvent("PeriodicTimerTrigger", "PeriodicTimerTrigger");
 	p_hz = 1.0;
 }
 
@@ -47,15 +47,16 @@ void UnsolicitedHeartbeat_ReceiveFSM::setupNotifications()
 	iop::Config cfg("~UnsolicitedHeartbeat");
 	cfg.param("hz", p_hz, p_hz);
 	if (p_hz > 0) {
+		ROS_DEBUG_NAMED("UnsolicitedHeartbeat", "create timer to send periodic heartbeats @ %.2fHz to %s", p_hz, p_destination.str().c_str());
 		p_timeout_timer = p_nh.createWallTimer(ros::WallDuration(1.0 / p_hz), &UnsolicitedHeartbeat_ReceiveFSM::p_timeout, this, false, false);
 	} else {
-		ROS_INFO_NAMED("UnsolicitedHeartbeat", "periodic heartbeat disabled");
+		ROS_WARN_NAMED("UnsolicitedHeartbeat", "periodic heartbeat disabled");
 	}
 }
 
 void UnsolicitedHeartbeat_ReceiveFSM::broadcastReportHeartBeatPulseAction()
 {
-	ROS_DEBUG_NAMED("UnsolicitedHeartbeat", "send periodic heartbeat @ %.2fHz", p_hz);
+	ROS_DEBUG_NAMED("UnsolicitedHeartbeat", "send periodic heartbeat @ %.2fHz to %s", p_hz, p_destination.str().c_str());
 	ReportHeartbeatPulse response;
 	sendJausMessage(response, p_destination);
 }
@@ -71,7 +72,7 @@ void UnsolicitedHeartbeat_ReceiveFSM::p_timeout(const ros::WallTimerEvent& event
 {
 	this->getHandler()->invoke(p_timeout_event);
 	// create a new event, since the InternalEventHandler deletes the given.
-	p_timeout_event = new InternalEvent("PeriodicTimerTrigger", "PeriodicTimeout");
+	p_timeout_event = new InternalEvent("PeriodicTimerTrigger", "PeriodicTimerTrigger");
 }
 
 };

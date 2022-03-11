@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>fkie_iop_builder</run_depend>
+  <run_depend>fkie_iop_component</run_depend>
   <run_depend>fkie_iop_digital_resource_discovery</run_depend>
   <run_depend>fkie_iop_discovery</run_depend>
   <run_depend>fkie_iop_health_monitor</run_depend>
