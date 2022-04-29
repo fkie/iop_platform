@@ -59,14 +59,14 @@ protected:
 	urn_jaus_jss_iop_DigitalResourceDiscoveryClient::DigitalResourceDiscoveryClientService* pDigitalResourceDiscoveryClientService;
 
 	ros::NodeHandle p_nh;
-	ros::Timer p_query_timer;
+	ros::WallTimer p_query_timer;
 	ros::Publisher p_pub_endoints;
 	JausAddress p_remote_addr;
 	bool has_access;
 
 	virtual void run();
 	void p_discovered_endpoints(std::vector<digital_resource_endpoint::DigitalResourceEndpoint>, JausAddress &);
-	void pQueryCallback(const ros::TimerEvent& event);
+	void pQueryCallback(const ros::WallTimerEvent& event);
 
 };
 

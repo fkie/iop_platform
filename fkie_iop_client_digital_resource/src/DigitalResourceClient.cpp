@@ -98,7 +98,7 @@ void DigitalResourceClient::create_events(std::string service_uri, JausAddress c
 {
 	ROS_INFO_NAMED("DigitalResourceClient", "create QUERY timer to update endpoints from %d.%d.%d",
 			component.getSubsystemID(), component.getNodeID(), component.getComponentID());
-	p_query_timer = p_nh.createTimer(ros::Duration(1), &DigitalResourceClient::pQueryCallback, this);
+	p_query_timer = p_nh.createWallTimer(ros::WallDuration(1), &DigitalResourceClient::pQueryCallback, this);
 }
 
 void DigitalResourceClient::cancel_events(std::string service_uri, JausAddress component, bool by_query)
@@ -106,7 +106,7 @@ void DigitalResourceClient::cancel_events(std::string service_uri, JausAddress c
 	p_query_timer.stop();
 }
 
-void DigitalResourceClient::pQueryCallback(const ros::TimerEvent& event)
+void DigitalResourceClient::pQueryCallback(const ros::WallTimerEvent& event)
 {
 	if (p_remote_addr.get() != 0) {
 		ROS_INFO_NAMED("DigitalResourceClient", "update endpoints for %s", p_remote_addr.str().c_str());
@@ -117,6 +117,7 @@ void DigitalResourceClient::pQueryCallback(const ros::TimerEvent& event)
 void DigitalResourceClient::p_discovered_endpoints(std::vector<digital_resource_endpoint::DigitalResourceEndpoint> endpoints, JausAddress &address)
 {
 	p_query_timer.stop();
+	ROS_INFO_NAMED("DigitalResourceClient", "discovered %ld endpoints", endpoints.size());
 	fkie_iop_msgs::DigitalResourceEndpoints ros_msg;
 	for (unsigned int i = 0; i < endpoints.size(); i++) {
 		fkie_iop_msgs::DigitalResourceEndpoint ep;
