@@ -1,6 +1,6 @@
-This repository is part of [ROS/IOP Bridge](https://github.com/fkie/iop_core/blob/master/README.md).
+This repository is part of [ROS/IOP Bridge](https://github.com/fkie/iop_core/blob/ros2/README.md).
 
-[![Build Status](https://travis-ci.org/fkie/iop_platform.svg?branch=master)](https://travis-ci.org/fkie/iop_platform)
+[![jazzy](https://github.com/fkie/iop_platform/actions/workflows/main.yml/badge.svg)](https://github.com/fkie/iop_platform/actions/workflows/main.yml)
 
 # Interfaces
 
