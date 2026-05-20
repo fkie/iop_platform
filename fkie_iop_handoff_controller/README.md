@@ -44,25 +44,3 @@ _handoff_own_response (fkie_iop_msgs::HandoffResponse)_
 
 > Listen for response from ROS-OCU to remote requests.
 
-
-## fkie_iop_handoff: EnhancedAccessControl
-
-The EnhancedAccessControl service extends Access Control to allow for handoff of control from one client to another.
-
-#### Parameter:
-
-_enhanced_timeout (int_, (Default: 10)
-
-> Clients must re-request handoff to prevent being denied handoff request when the timeout expires. A value of zero indicates this feature is disabled.
-
-_handoff_timeout (int_, (Default: 60)
-
-> The handoff timeout is the amount of time that must pass from when this service first requests a handoff from the current controlling client before the requester is notified that the handoff failed due to a timeout.
-
-#### Publisher:
-
-> None
-
-#### Subscriber:
-
-> None

@@ -8,3 +8,7 @@
     uri: https://github.com/fkie/iop_core
     version: ros2_iop6
 
+- git:
+    local-name: iop_jaus_sensing
+    uri: https://github.com/fkie/iop_jaus_sensing
+    version: ros2_iop6

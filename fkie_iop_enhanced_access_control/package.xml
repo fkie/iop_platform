@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>fkie_iop_enhanced_access_control</name>
+  <version>2.0.0</version>
+  <description>EnhancedAccessControl service for a controlled change the access control from one OCU to another. </description>
+
+  <maintainer email="alexander.tiderko@fkie.fraunhofer.de">Alexander Tiderko</maintainer>
+  <license>GPLv2</license>
+  <url type="website">https://github.com/fkie/iop_platform</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>fkie_iop_accesscontrol</depend>
+  <depend>fkie_iop_msgs</depend>
+  <depend>fkie_iop_ocu_slavelib</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>

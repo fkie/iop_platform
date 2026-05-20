@@ -1,8 +1,0 @@
-<library path="fkie_iop_handoff">
-	<class name="EnhancedAccessControl" type="urn_jaus_jss_iop_EnhancedAccessControl::EnhancedAccessControlService" base_class_type="JTS::Service"
-		id="urn:jaus:jss:iop:EnhancedAccessControl" version="1.1">
-	</class>
-	<class name="HandoffController" type="urn_jaus_jss_iop_HandoffController::HandoffControllerService" base_class_type="JTS::Service"
-		id="urn:jaus:jss:iop:HandoffController" version="1.1">
-	</class>
-</library>

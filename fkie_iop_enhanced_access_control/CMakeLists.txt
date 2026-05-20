@@ -1,16 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(fkie_iop_handoff)
-
-# set default c++ version
-if($ENV{ROS_DISTRO} MATCHES "foxy")
-  if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
-  endif()
-elseif($ENV{ROS_DISTRO} MATCHES "galactic")
-  if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
-  endif()
-endif()
+project(fkie_iop_enhanced_access_control)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-ignored-qualifiers)
@@ -27,7 +16,6 @@ find_package(fkie_iop_ocu_slavelib REQUIRED)
 iop_init()
 iop_export_service(
   urn_jaus_jss_iop_EnhancedAccessControl
-  urn_jaus_jss_iop_HandoffController
 )
 iop_code_generator(
   IDLS
@@ -35,14 +23,11 @@ iop_code_generator(
     urn.jaus.jss.core-v1.1/Events.xml
     urn.jaus.jss.core-v1.1/EventsClient.xml
     urn.jaus.jss.core-v1.1/Transport.xml
-    urn.jaus.jss.iop/EnhancedAccessControl_V1.xml
-    urn.jaus.jss.iop/HandoffController_V1.xml
+    urn.jaus.jss.iop/EnhancedAccessControl.xml
   OWN_IDLS
   OVERRIDES
     include/urn_jaus_jss_iop_EnhancedAccessControl/EnhancedAccessControl_ReceiveFSM.h
-    include/urn_jaus_jss_iop_HandoffController/HandoffController_ReceiveFSM.h
     src/urn_jaus_jss_iop_EnhancedAccessControl/EnhancedAccessControl_ReceiveFSM.cpp
-    src/urn_jaus_jss_iop_HandoffController/HandoffController_ReceiveFSM.cpp
   EXTERN_SERVICES
     urn_jaus_jss_core_AccessControl
     urn_jaus_jss_core_Events

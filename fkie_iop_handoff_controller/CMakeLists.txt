@@ -1,28 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
-project(fkie_iop_platform_state)
-
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# set default c++ version
-if($ENV{ROS_DISTRO} MATCHES "foxy")
-  if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
-  endif()
-elseif($ENV{ROS_DISTRO} MATCHES "galactic")
-  if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
-  endif()
-endif()
+project(fkie_iop_handoff_controller)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-ignored-qualifiers)
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(fkie_iop_accesscontrol REQUIRED)
+find_package(fkie_iop_transport REQUIRED)
+find_package(fkie_iop_msgs REQUIRED)
 find_package(fkie_iop_ocu_slavelib REQUIRED)
 
 ###############
@@ -30,30 +15,18 @@ find_package(fkie_iop_ocu_slavelib REQUIRED)
 ###############
 iop_init()
 iop_export_service(
-    urn_jaus_jss_iop_PlatformState
-    urn_jaus_jss_iop_PlatformStateClient
+  urn_jaus_jss_iop_HandoffController
 )
 iop_code_generator(
   IDLS
-    urn.jaus.jss.core-v1.1/Events.xml
-    urn.jaus.jss.core-v1.1/EventsClient.xml
     urn.jaus.jss.core-v1.1/Transport.xml
-    urn.jaus.jss.core-v1.1/AccessControl.xml
-    urn.jaus.jss.core-v1.1/AccessControlClient.xml
-    urn.jaus.jss.iop/PlatformState.xml
-    urn.jaus.jss.iop/PlatformStateClient.xml
+    urn.jaus.jss.iop/HandoffController.xml
   OWN_IDLS
   OVERRIDES
-    include/urn_jaus_jss_iop_PlatformState/PlatformState_ReceiveFSM.h
-    include/urn_jaus_jss_iop_PlatformStateClient/PlatformStateClient_ReceiveFSM.h
-    src/urn_jaus_jss_iop_PlatformState/PlatformState_ReceiveFSM.cpp
-    src/urn_jaus_jss_iop_PlatformStateClient/PlatformStateClient_ReceiveFSM.cpp
+    include/urn_jaus_jss_iop_HandoffController/HandoffController_ReceiveFSM.h
+    src/urn_jaus_jss_iop_HandoffController/HandoffController_ReceiveFSM.cpp
   EXTERN_SERVICES
-      urn_jaus_jss_core_AccessControl
-      urn_jaus_jss_core_AccessControlClient
-      urn_jaus_jss_core_Events
-      urn_jaus_jss_core_EventsClient
-      urn_jaus_jss_core_Transport
+    urn_jaus_jss_core_Transport
   GENERATED_SOURCES cppfiles
 )
 
@@ -61,14 +34,14 @@ iop_code_generator(
 ## Build ##
 ###########
 set(dependencies
-  fkie_iop_accesscontrol
+  fkie_iop_msgs
+  fkie_iop_transport
   fkie_iop_ocu_slavelib
 )
 
 include_directories(
   include
   ${IOP_COMPONENT_INCLUDE_DIRS}
-  ${fkie_iop_accesscontrol_INCLUDE_DIRS}
   ${fkie_iop_ocu_slavelib_INCLUDE_DIRS}
 )
 
@@ -78,7 +51,8 @@ add_library(${PROJECT_NAME} SHARED
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  fkie_iop_accesscontrol::fkie_iop_accesscontrol
+  ${fkie_iop_msgs_TARGETS}
+  fkie_iop_transport::fkie_iop_transport
   fkie_iop_ocu_slavelib::fkie_iop_ocu_slavelib
 )
 
@@ -112,7 +86,7 @@ ament_export_targets(${PROJECT_NAME}Targets HAS_LIBRARY_TARGET)
 ament_export_include_directories(
   include
   ${IOP_COMPONENT_INCLUDE_DIRS}
-  ${fkie_iop_accesscontrol_INCLUDE_DIRS}
+  ${fkie_iop_transport_INCLUDE_DIRS}
   ${fkie_iop_ocu_slavelib_INCLUDE_DIRS}
 )
 ament_export_libraries(${PROJECT_NAME})

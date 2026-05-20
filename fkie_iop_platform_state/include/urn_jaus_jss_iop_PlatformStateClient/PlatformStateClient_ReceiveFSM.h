@@ -20,17 +20,15 @@ along with this program; or you can read the full license at
 
 /** \author Alexander Tiderko */
 
-
 #ifndef PLATFORMSTATECLIENT_RECEIVEFSM_H
 #define PLATFORMSTATECLIENT_RECEIVEFSM_H
 
-#include "JausUtils.h"
-#include "JausUtils.h"
 #include "InternalEvents/InternalEventHandler.h"
-#include "Transport/JausTransport.h"
 #include "JTSStateMachine.h"
-#include "urn_jaus_jss_iop_PlatformStateClient/Messages/MessageSet.h"
+#include "JausUtils.h"
+#include "Transport/JausTransport.h"
 #include "urn_jaus_jss_iop_PlatformStateClient/InternalEvents/InternalEventsSet.h"
+#include "urn_jaus_jss_iop_PlatformStateClient/Messages/MessageSet.h"
 
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
@@ -39,20 +37,18 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_core_EventsClient/EventsClient_ReceiveFSM.h"
 #include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 
-
 #include "PlatformStateClient_ReceiveFSM_sm.h"
-#include <rclcpp/rclcpp.hpp>
 #include <fkie_iop_component/iop_component.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <functional>
 
+#include <fkie_iop_events/EventHandlerInterface.h>
+#include <fkie_iop_ocu_slavelib/SlaveHandlerInterface.h>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/u_int8.hpp>
-#include <fkie_iop_ocu_slavelib/SlaveHandlerInterface.h>
-#include <fkie_iop_events/EventHandlerInterface.h>
 
-namespace urn_jaus_jss_iop_PlatformStateClient
-{
+namespace urn_jaus_jss_iop_PlatformStateClient {
 
 const int INITIALIZE = 0;
 const int OPERATIONAL = 1;
@@ -65,74 +61,72 @@ const int PLATFORM_STATE_UNKNOWN = 255;
 const int TRANSITIONING = 0;
 const int INVALID_STATE = 1;
 
-class DllExport PlatformStateClient_ReceiveFSM : public JTS::StateMachine, public iop::ocu::SlaveHandlerInterface, public iop::EventHandlerInterface
-{
+class DllExport PlatformStateClient_ReceiveFSM : public JTS::StateMachine, public iop::ocu::SlaveHandlerInterface, public iop::EventHandlerInterface {
 public:
-	PlatformStateClient_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
-	virtual ~PlatformStateClient_ReceiveFSM();
+    PlatformStateClient_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM, urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
+    virtual ~PlatformStateClient_ReceiveFSM();
 
-	/// Handle notifications on parent state changes
-	virtual void setupNotifications();
-	virtual void setupIopConfiguration();
+    /// Handle notifications on parent state changes
+    virtual void setupNotifications();
+    virtual void setupIopConfiguration();
 
-	/// Action Methods
-	virtual void handleConfirmPlatformStateRequestAction(ConfirmPlatformStateRequest msg, Receive::Body::ReceiveRec transportData);
-	virtual void handleReportPlatformStateAction(ReportPlatformState msg, Receive::Body::ReceiveRec transportData);
+    /// Action Methods
+    virtual void handleConfirmPlatformStateRequestAction(ConfirmPlatformStateRequest msg, Receive::Body::ReceiveRec transportData);
+    virtual void handleReportPlatformStateAction(ReportPlatformState msg, Receive::Body::ReceiveRec transportData);
 
+    template <class T>
+    void set_state_handler(void (T::*handler)(JausAddress&, unsigned char state), T* obj)
+    {
+        p_class_interface_callback = std::bind(handler, obj, std::placeholders::_1, std::placeholders::_2);
+    }
+    void query_state(JausAddress address);
+    /**
+     * sets the platform the new state:
+     * 0: Initialize
+     * 1: Operational
+     * 2: Shutdown
+     * 3: System_Abort
+     * 4: Emergency
+     * 5: Render_Useless
+     */
+    void set_state(JausAddress address, unsigned char state);
 
-	template<class T>
-	void set_state_handler(void(T::*handler)(JausAddress &, unsigned char state), T*obj) {
-		p_class_interface_callback = std::bind(handler, obj, std::placeholders::_1, std::placeholders::_2);
-	}
-	void query_state(JausAddress address);
-	/**
-	 * sets the platform the new state:
-	 * 0: Initialize
-	 * 1: Operational
-	 * 2: Shutdown
-	 * 3: System_Abort
-	 * 4: Emergency
-	 * 5: Render_Useless
-	 */
-	void set_state(JausAddress address, unsigned char state);
+    /// Guard Methods
 
-	/// Guard Methods
+    /// EventHandlerInterface Methods
+    void event(JausAddress reporter, unsigned short query_msg_id, unsigned int reportlen, const unsigned char* reportdata);
 
-	/// EventHandlerInterface Methods
-	void event(JausAddress reporter, unsigned short query_msg_id, unsigned int reportlen, const unsigned char* reportdata);
+    /// SlaveHandlerInterface Methods
+    void register_events(JausAddress remote_addr, double hz);
+    void unregister_events(JausAddress remote_addr);
+    void send_query(JausAddress remote_addr);
+    void stop_query(JausAddress remote_addr);
 
-	/// SlaveHandlerInterface Methods
-	void register_events(JausAddress remote_addr, double hz);
-	void unregister_events(JausAddress remote_addr);
-	void send_query(JausAddress remote_addr);
-	void stop_query(JausAddress remote_addr);
-
-	PlatformStateClient_ReceiveFSMContext *context;
+    PlatformStateClient_ReceiveFSMContext* context;
 
 protected:
+    /// References to parent FSMs
+    urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM;
+    urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM;
+    urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
 
-	/// References to parent FSMs
-	urn_jaus_jss_core_AccessControlClient::AccessControlClient_ReceiveFSM* pAccessControlClient_ReceiveFSM;
-	urn_jaus_jss_core_EventsClient::EventsClient_ReceiveFSM* pEventsClient_ReceiveFSM;
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+    std::shared_ptr<iop::Component> cmp;
+    rclcpp::Logger logger;
 
-	std::shared_ptr<iop::Component> cmp;
-	rclcpp::Logger logger;
+    std::function<void(JausAddress&, unsigned char state)> p_class_interface_callback;
+    rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr p_sub_state;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr p_sub_state_str;
+    rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr p_pub_state;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr p_pub_state_str;
+    int p_state;
+    double p_hz;
+    QueryPlatformState p_query_platform_state_msg;
 
-	std::function<void (JausAddress &, unsigned char state)> p_class_interface_callback;
-	rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr p_sub_state;
-	rclcpp::Subscription<std_msgs::msg::String>::SharedPtr p_sub_state_str;
-	rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr p_pub_state;
-	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr p_pub_state_str;
-	int p_state;
-	double p_hz;
-	QueryPlatformState p_query_platform_state_msg;
-
-	void pRosNewCmdState(const std_msgs::msg::UInt8::SharedPtr msg);
-	void pRosNewCmdStateStr(const std_msgs::msg::String::SharedPtr msg);
-	void p_publish_state(int state);
-	std::string p_state2str(int state);
-	int p_state2int(std::string state);
+    void pRosNewCmdState(const std_msgs::msg::UInt8::SharedPtr msg);
+    void pRosNewCmdStateStr(const std_msgs::msg::String::SharedPtr msg);
+    void p_publish_state(int state);
+    std::string p_state2str(int state);
+    int p_state2int(std::string state);
 };
 
 }

@@ -1,0 +1,5 @@
+<library path="fkie_iop_handoff">
+	<class name="HandoffController" type="urn_jaus_jss_iop_HandoffController::HandoffControllerService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:iop:HandoffController" version="2.0">
+	</class>
+</library>
