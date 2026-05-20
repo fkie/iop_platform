@@ -1,14 +1,11 @@
 This repository is part of [ROS/IOP Bridge](https://github.com/fkie/iop_core/blob/ros2/README.md).
 
-[![jazzy](https://github.com/fkie/iop_platform/actions/workflows/main.yml/badge.svg)](https://github.com/fkie/iop_platform/actions/workflows/main.yml)
+[![ros2](https://github.com/fkie/iop_platform/actions/workflows/main.yml/badge.svg)](https://github.com/fkie/iop_platform/actions/workflows/main.yml)
 
 # Interfaces
 
 List of service plugins in this repository:
 
-[fkie_iop_client_digital_resource: DigitalResourceClient](fkie_iop_client_digital_resource/README.md)  
-[fkie_iop_digital_resource_discovery: DigitalResourceDiscovery](fkie_iop_digital_resource_discovery/README.md)  
-[fkie_iop_digital_resource_discovery: DigitalResourceDiscoveryClient](fkie_iop_digital_resource_discovery/README.md#fkie_iop_digital_resource_discovery-digitalresourcediscoveryclient)  
 [fkie_iop_handoff: HandoffController](fkie_iop_handoff/README.md)  
 [fkie_iop_handoff: EnhancedAccessControl](fkie_iop_handoff/README.md#fkie_iop_handoff-enhancedaccesscontrol)  
 [fkie_iop_health_monitor: HealthMonitor](fkie_iop_health_monitor/README.md)  
