@@ -1,5 +1,4 @@
 <library path="fkie_iop_health_monitor">
-	<class name="HealthMonitor" type="urn_jaus_jss_exp_aeodrs_HealthMonitor::HealthMonitorService" base_class_type="JTS::Service"
-		id="urn:jaus:jss:exp:aeodrs:HealthMonitor" version="1.4">
+	<class name="HealthMonitor" type="urn_jaus_jss_iop_HealthMonitor::HealthMonitorService" base_class_type="JTS::Service" id="urn:jaus:jss:iop:HealthMonitor" version="1.5">
 	</class>
 </library>

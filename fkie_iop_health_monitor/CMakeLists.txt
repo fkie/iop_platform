@@ -6,16 +6,6 @@ if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
 endif()
 
-# set default c++ version
-if($ENV{ROS_DISTRO} MATCHES "foxy")
-  if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
-  endif()
-elseif($ENV{ROS_DISTRO} MATCHES "galactic")
-  if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
-  endif()
-endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-ignored-qualifiers)
@@ -29,7 +19,7 @@ find_package(fkie_iop_accesscontrol REQUIRED)
 ###############
 iop_init()
 iop_export_service(
-    urn_jaus_jss_exp_aeodrs_HealthMonitor
+    urn_jaus_jss_iop_HealthMonitor
 )
 iop_code_generator(
   IDLS
@@ -38,11 +28,11 @@ iop_code_generator(
     urn.jaus.jss.core-v1.1/Transport.xml
     urn.jaus.jss.core-v1.1/AccessControl.xml
     urn.jaus.jss.core-v1.1/AccessControlClient.xml
-    urn.jaus.jss.iop/HealthMonitor_V1.4.xml
+    urn.jaus.jss.iop/HealthMonitor.xml
   OWN_IDLS
   OVERRIDES
-    include/urn_jaus_jss_exp_aeodrs_HealthMonitor/HealthMonitor_ReceiveFSM.h
-    src/urn_jaus_jss_exp_aeodrs_HealthMonitor/HealthMonitor_ReceiveFSM.cpp
+    include/urn_jaus_jss_iop_HealthMonitor/HealthMonitor_ReceiveFSM.h
+    src/urn_jaus_jss_iop_HealthMonitor/HealthMonitor_ReceiveFSM.cpp
   EXTERN_SERVICES
       urn_jaus_jss_core_AccessControl
       urn_jaus_jss_core_AccessControlClient

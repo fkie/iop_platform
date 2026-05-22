@@ -24,140 +24,164 @@ along with this program; or you can read the full license at
 #include <fkie_iop_component/iop_config.hpp>
 #include <iostream>
 
-
-
 using namespace std;
 using namespace JTS;
 
-namespace urn_jaus_jss_iop_PlatformMode
-{
-
+namespace urn_jaus_jss_iop_PlatformMode {
 
 PlatformMode_ReceiveFSM::PlatformMode_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
-: logger(cmp->get_logger().get_child("PlatformMode"))
+    : logger(cmp->get_logger().get_child("PlatformMode"))
 {
 
-	/*
-	 * If there are other variables, context must be constructed last so that all
-	 * class variables are available if an EntryAction of the InitialState of the
-	 * statemachine needs them.
-	 */
-	context = new PlatformMode_ReceiveFSMContext(*this);
+    /*
+     * If there are other variables, context must be constructed last so that all
+     * class variables are available if an EntryAction of the InitialState of the
+     * statemachine needs them.
+     */
+    context = new PlatformMode_ReceiveFSMContext(*this);
 
-	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
-	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->cmp = cmp;
-	p_supported_modes.push_back(0);  // only Standard operation is supported by default
-	platform_mode = 0;
+    this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+    this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+    this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+    this->cmp = cmp;
+    p_supported_modes.push_back(0); // only Standard operation is supported by default
+    platform_mode = 0;
 }
-
 
 PlatformMode_ReceiveFSM::~PlatformMode_ReceiveFSM()
 {
-	delete context;
+    delete context;
 }
 
 void PlatformMode_ReceiveFSM::setupNotifications()
 {
-	pAccessControl_ReceiveFSM->registerNotification("Receiving_Ready_NotControlled", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_NotControlled", "AccessControl_ReceiveFSM");
-	pAccessControl_ReceiveFSM->registerNotification("Receiving_Ready_Controlled", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_Controlled", "AccessControl_ReceiveFSM");
-	pAccessControl_ReceiveFSM->registerNotification("Receiving_Ready", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_NotControlled", "AccessControl_ReceiveFSM");
-	pAccessControl_ReceiveFSM->registerNotification("Receiving", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_NotControlled", "AccessControl_ReceiveFSM");
-	registerNotification("Receiving_Ready_NotControlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_NotControlled", "PlatformMode_ReceiveFSM");
-	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "PlatformMode_ReceiveFSM");
-	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "PlatformMode_ReceiveFSM");
-	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "PlatformMode_ReceiveFSM");
+    pAccessControl_ReceiveFSM->registerNotification("Receiving_Ready_NotControlled", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_NotControlled", "AccessControl_ReceiveFSM");
+    pAccessControl_ReceiveFSM->registerNotification("Receiving_Ready_Controlled", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_Controlled", "AccessControl_ReceiveFSM");
+    pAccessControl_ReceiveFSM->registerNotification("Receiving_Ready", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_NotControlled", "AccessControl_ReceiveFSM");
+    pAccessControl_ReceiveFSM->registerNotification("Receiving", ieHandler, "InternalStateChange_To_PlatformMode_ReceiveFSM_Receiving_Ready_NotControlled", "AccessControl_ReceiveFSM");
+    registerNotification("Receiving_Ready_NotControlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_NotControlled", "PlatformMode_ReceiveFSM");
+    registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "PlatformMode_ReceiveFSM");
+    registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "PlatformMode_ReceiveFSM");
+    registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "PlatformMode_ReceiveFSM");
 }
-
 
 void PlatformMode_ReceiveFSM::setupIopConfiguration()
 {
-	iop::Config cfg(cmp, "PlatformMode");
-	cfg.declare_param<uint8_t>("platform_mode", platform_mode, true,
-		rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
-		"Initial platform mode.",
-		"Default: 0; 0:Standard_Operating, 1:Training, 2:Maintenance");
-	cfg.param_named<uint8_t>("platform_mode", platform_mode, platform_mode, platform_mode_map(), true, "");
-	cfg.declare_param<std::vector<uint8_t> >("supported_modes", p_supported_modes, true,
-		rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER_ARRAY,
-		"Supported platform modes.",
-		"Default: [0]");
-	cfg.param_vector<std::vector<uint8_t> >("supported_modes", p_supported_modes, p_supported_modes, true);
+    iop::Config cfg(cmp, "PlatformMode");
+    cfg.declare_param<uint8_t>("platform_mode", platform_mode, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
+        "Initial platform mode.",
+        "Default: 0; 0:Standard_Operating, 1:Training, 2:Maintenance");
+    cfg.param_named<uint8_t>("platform_mode", platform_mode, platform_mode, platform_mode_map(), true, "");
+    cfg.declare_param<std::vector<uint8_t>>("supported_modes", p_supported_modes, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER_ARRAY,
+        "Supported platform modes.",
+        "Default: [0]");
+    cfg.param_vector<std::vector<uint8_t>>("supported_modes", p_supported_modes, p_supported_modes, true);
 
-	if (p_supported_modes.size() == 0) {
-		p_supported_modes.push_back(0);
-	}
-	p_report_platformmode.getBody()->getReportPlatformModeRec()->setStatus(1);  // 0="Initializing", 1="Active", 2="Exiting"
-	p_report_platformmode.getBody()->getReportPlatformModeRec()->setPlatformMode(platform_mode);
-	pEvents_ReceiveFSM->get_event_handler().register_query(QueryPlatformMode::ID);
-	pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformMode::ID, &p_report_platformmode);
-	p_pub_mode = cfg.create_publisher<std_msgs::msg::UInt8>("platform_mode", 5);
-	auto rosmsg = std_msgs::msg::UInt8();
-	rosmsg.data = platform_mode;
-	p_pub_mode->publish(rosmsg);
-	p_sub_mode = cfg.create_subscription<std_msgs::msg::UInt8>("set_platform_mode", 5, std::bind(&PlatformMode_ReceiveFSM::pRosMode, this, std::placeholders::_1));
-
+    if (p_supported_modes.size() == 0) {
+        p_supported_modes.push_back(0);
+    }
+    p_report_platformmode.getBody()->getReportPlatformModeRec()->setStatus(1); // 0="Initializing", 1="Active", 2="Exiting"
+    p_report_platformmode.getBody()->getReportPlatformModeRec()->setPlatformMode(platform_mode);
+    pEvents_ReceiveFSM->get_event_handler().register_query(QueryPlatformMode::ID);
+    pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformMode::ID, &p_report_platformmode);
+    p_pub_mode = cfg.create_publisher<std_msgs::msg::UInt8>("platform_mode", 5);
+    auto rosmsg = std_msgs::msg::UInt8();
+    rosmsg.data = platform_mode;
+    p_pub_mode->publish(rosmsg);
+    p_sub_mode = cfg.create_subscription<std_msgs::msg::UInt8>("set_platform_mode", 5, std::bind(&PlatformMode_ReceiveFSM::pRosMode, this, std::placeholders::_1));
 }
 
 std::map<uint8_t, std::string> PlatformMode_ReceiveFSM::platform_mode_map()
 {
-	std::map<uint8_t, std::string> result;
-	result[0] = "Standard_Operating";
-	result[1] = "Training";
-	result[2] = "Maintenance";
-	return result;
+    std::map<uint8_t, std::string> result;
+    result[0] = "Standard_Operating";
+    result[1] = "Training";
+    result[2] = "Maintenance";
+    result[3] = "LowPower";
+    return result;
 }
 
 void PlatformMode_ReceiveFSM::pRosMode(const std_msgs::msg::UInt8::SharedPtr msg)
 {
-	updatePlatformMode(msg->data);
+    updatePlatformMode(msg->data);
 }
 
-void PlatformMode_ReceiveFSM::SendAction(std::string arg0, Receive::Body::ReceiveRec transportData)
+void PlatformMode_ReceiveFSM::sendReportAllowedPlatformModeTransitionsAction(QueryAllowedPlatformModeTransitions msg, Receive::Body::ReceiveRec transportData)
 {
-	int16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	if(strcmp(arg0.c_str(), "ReportPlatformMode") == 0)
-	{
-		sendJausMessage(p_report_platformmode, sender);
-	}
-	else if	(strcmp(arg0.c_str(),"ReportSupportedPlatformModes") == 0)
-	{
-		ReportSupportedPlatformModes responses;
-		for (unsigned int i = 0; i < p_supported_modes.size(); i++) {
-			ReportSupportedPlatformModes::Body::SupportedPlatformModesList::PlatformModeRec comps;
-			comps.setPlatformMode(p_supported_modes[i]);
-			responses.getBody()->getSupportedPlatformModesList()->addElement(comps);
-		}
-		sendJausMessage(responses, sender);
-	}
+    /// Insert User Code HERE
+	/// send ReportAllowedPlatformModeTransitions
 }
 
-void PlatformMode_ReceiveFSM::SetPlatformModeAction(SetPlatformMode msg,Receive::Body::ReceiveRec transportData)
+void PlatformMode_ReceiveFSM::sendReportPlatformModeAction(QueryPlatformMode msg, Receive::Body::ReceiveRec transportData)
 {
-	updatePlatformMode(msg.getBody()->getPlatformModeRec()->getPlatformMode());
-	auto rosmsg = std_msgs::msg::UInt8();
-	rosmsg.data = platform_mode;
-	p_pub_mode->publish(rosmsg);
+    JausAddress sender = transportData.getAddress();
+    sendJausMessage(p_report_platformmode, sender);
 }
 
-void PlatformMode_ReceiveFSM::updatePlatformMode(uint8_t mode)
+void PlatformMode_ReceiveFSM::sendReportSupportedPlatformModesAction(QuerySupportedPlatformModes msg, Receive::Body::ReceiveRec transportData)
 {
-	if (platform_mode != mode) {
-		platform_mode = mode;
-		p_report_platformmode.getBody()->getReportPlatformModeRec()->setPlatformMode(platform_mode);
-		pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformMode::ID, &p_report_platformmode);
-	}
+    JausAddress sender = transportData.getAddress();
+    ReportSupportedPlatformModes response;
+    for (unsigned int i = 0; i < p_supported_modes.size(); i++) {
+        ReportSupportedPlatformModes::Body::SupportedPlatformModesList::PlatformModeRec comps;
+        comps.setPlatformMode(p_supported_modes[i]);
+        response.getBody()->getSupportedPlatformModesList()->addElement(comps);
+    }
+    sendJausMessage(response, sender);
+}
+
+void PlatformMode_ReceiveFSM::sendReportSupportedPlatformModesExtAction(QuerySupportedPlatformModesExt msg, Receive::Body::ReceiveRec transportData)
+{
+    /// Insert User Code HERE
+    /// send ReportSupportedPlatformModesExt
+}
+
+void PlatformMode_ReceiveFSM::sendSetPlatformModeResponseFailureAction(SetPlatformMode msg, Receive::Body::ReceiveRec transportData)
+{
+    /// Insert User Code HERE
+    /// send SetPlatformModeResponse
+}
+
+void PlatformMode_ReceiveFSM::sendSetPlatformModeResponseSuccessAction(SetPlatformMode msg, Receive::Body::ReceiveRec transportData)
+{
+    /// Insert User Code HERE
+    /// send SetPlatformModeResponse
+}
+
+void PlatformMode_ReceiveFSM::setPlatformModeAction(SetPlatformMode msg)
+{
+    updatePlatformMode(msg.getBody()->getPlatformModeRec()->getPlatformMode());
+    auto rosmsg = std_msgs::msg::UInt8();
+    rosmsg.data = platform_mode;
+    p_pub_mode->publish(rosmsg);
 }
 
 bool PlatformMode_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec transportData)
 {
-	//// By default, inherited guards call the parent function.
-	//// This can be replaced or modified as needed.
-	return pAccessControl_ReceiveFSM->isControllingClient(transportData );
+    //// By default, inherited guards call the parent function.
+    //// This can be replaced or modified as needed.
+    return pAccessControl_ReceiveFSM->isControllingClient(transportData);
 }
 
+bool PlatformMode_ReceiveFSM::isSupported(SetPlatformMode msg)
+{
+    unsigned int requested_mode = msg.getBody()->getPlatformModeRec()->getPlatformMode();
+    for (unsigned int i = 0; i < p_supported_modes.size(); i++) {
+        if (requested_mode == p_supported_modes[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void PlatformMode_ReceiveFSM::updatePlatformMode(uint8_t mode)
+{
+    if (platform_mode != mode) {
+        platform_mode = mode;
+        p_report_platformmode.getBody()->getReportPlatformModeRec()->setPlatformMode(platform_mode);
+        pEvents_ReceiveFSM->get_event_handler().set_report(QueryPlatformMode::ID, &p_report_platformmode);
+    }
+}
 }
