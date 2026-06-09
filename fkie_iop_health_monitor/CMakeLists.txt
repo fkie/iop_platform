@@ -23,11 +23,11 @@ iop_export_service(
 )
 iop_code_generator(
   IDLS
-    urn.jaus.jss.core-v1.1/Events.xml
-    urn.jaus.jss.core-v1.1/EventsClient.xml
-    urn.jaus.jss.core-v1.1/Transport.xml
-    urn.jaus.jss.core-v1.1/AccessControl.xml
-    urn.jaus.jss.core-v1.1/AccessControlClient.xml
+    urn.jaus.jss.core/Events.xml
+    urn.jaus.jss.core/EventsClient.xml
+    urn.jaus.jss.core/Transport.xml
+    urn.jaus.jss.core/AccessControl.xml
+    urn.jaus.jss.core/AccessControlClient.xml
     urn.jaus.jss.iop/HealthMonitor.xml
   OWN_IDLS
   OVERRIDES
