@@ -72,11 +72,13 @@ void PlatformState_ReceiveFSM::setupIopConfiguration()
         rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
         "Default state on start.",
         "Default: 1; 0:initialize, 1:operational, 2:shutdown, 3:system_abort, 4:emergency, 5:render_useless");
-    cfg.declare_param<std::vector<std::string>>("supported_states", p_supported_states, true,
+    std::vector<std::string> s_sup_default;
+    s_sup_default.push_back("operational");
+    s_sup_default.push_back("emergency");
+    cfg.declare_param<std::vector<std::string>>("supported_states", s_sup_default, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
         "A list with supported states.",
-        "Default: [OPERATIONAL, EMERGENCY]; Possible entries: initialize, operational, shutdown, system_abort, emergency, render_useless");
-
+        "Default: [operational, emergency]; Possible entries: initialize, operational, shutdown, system_abort, emergency, render_useless");
     p_own_address = *(jausRouter->getJausAddress());
     pEvents_ReceiveFSM->get_event_handler().register_query(QueryPlatformState::ID);
     std::map<uint8_t, std::string> ps_names;
@@ -87,9 +89,6 @@ void PlatformState_ReceiveFSM::setupIopConfiguration()
     ps_names[4] = "emergency";
     ps_names[5] = "render_useless";
     cfg.param_named("init_platform_state", p_init_platform_state, p_init_platform_state, ps_names);
-    std::vector<std::string> s_sup_default;
-    s_sup_default.push_back("OPERATIONAL");
-    s_sup_default.push_back("EMERGENCY");
     cfg.param_vector<std::vector<std::string>>("supported_states", p_supported_states, s_sup_default);
     // normalize string to lower case
     std::vector<std::string> nomalizedlist;
@@ -229,14 +228,16 @@ int PlatformState_ReceiveFSM::p_publish_state(int state)
     int resp_code = INVALID_STATE;
     bool supported = p_is_supported_state(state);
     if (supported) {
-        if (p_pub_state->get_subscription_count() > 0 || p_pub_state_str->get_subscription_count() > 0) {
+        int state_sub_count = p_pub_state->get_subscription_count();
+        int state_str_sub_count = p_pub_state_str->get_subscription_count();
+        if (state_sub_count > 0 || state_str_sub_count > 0) {
             resp_code = TRANSITIONING;
-            if (p_pub_state->get_subscription_count() > 0) {
+            if (state_sub_count > 0) {
                 auto ros_msg = std_msgs::msg::UInt8();
                 ros_msg.data = state;
                 p_pub_state->publish(ros_msg);
             }
-            if (p_pub_state_str->get_subscription_count() > 0) {
+            if (state_str_sub_count > 0) {
                 auto ros_msg = std_msgs::msg::String();
                 ros_msg.data = p_state2str(state);
                 p_pub_state_str->publish(ros_msg);
