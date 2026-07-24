@@ -46,31 +46,22 @@ void HandoffController_ReceiveFSM::setupNotifications()
 void HandoffController_ReceiveFSM::setupIopConfiguration()
 {
     iop::Config cfg(cmp, "HandoffController");
-    cfg.declare_param<uint8_t>("enhanced_timeout", p_request_timeout, true,
+    cfg.param<int64_t>("enhanced_timeout", p_request_timeout, p_request_timeout, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
         "Timeout in seconds.",
         "Default: 10 sec");
-    cfg.declare_param<bool>("auto_request", p_auto_request, true,
+    cfg.param<bool>("auto_request", p_auto_request, p_auto_request, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_BOOL,
         "Requests automatically handoff on INSUFFICIENT_AUTHORITY.",
         "Default: false");
-    cfg.declare_param<uint8_t>("auto_authority", p_auto_authority, true,
+    cfg.param<uint8_t>("auto_authority", p_auto_authority, p_auto_authority, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
         "Authority for auto requests.",
         "Default: 255");
-    cfg.declare_param<std::string>("auto_explanation", p_auto_explanation, true,
+    cfg.param<std::string>("auto_explanation", p_auto_explanation, p_auto_explanation, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
         "Explanation text for auto requests.",
         "Default: \"\"");
-
-    uint64_t etimeout = p_request_timeout;
-    cfg.param("enhanced_timeout", etimeout, etimeout);
-    p_request_timeout = etimeout;
-    cfg.param("auto_request", p_auto_request, p_auto_request);
-    uint8_t eauthority = p_auto_authority;
-    cfg.param("auto_authority", eauthority, eauthority);
-    p_auto_authority = eauthority;
-    cfg.param("auto_explanation", p_auto_explanation, p_auto_explanation);
     // create ROS subscriber
     p_pub_handoff_response = cfg.create_publisher<fkie_iop_msgs::msg::HandoffResponse>("handoff_remote_response", 10);
     p_pub_handoff_request = cfg.create_publisher<fkie_iop_msgs::msg::HandoffRequest>("handoff_remote_request", 10);

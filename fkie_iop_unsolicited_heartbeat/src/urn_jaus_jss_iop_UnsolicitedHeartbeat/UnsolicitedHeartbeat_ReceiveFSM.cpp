@@ -47,11 +47,10 @@ void UnsolicitedHeartbeat_ReceiveFSM::setupIopConfiguration()
     iop::Config cfg(cmp, "UnsolicitedHeartbeat");
     // p_destination = JausAddress(this->jausRouter->getJausAddress()->getSubsystemID(), 255, 255);
     p_destination = JausAddress(65535, 255, 255);
-    cfg.declare_param<double>("hz", p_hz, true,
+    cfg.param<double>("hz", p_hz, p_hz, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE,
         "Specifies the rate at which the unsolicited Report Heartbeat Pulse message is send, in Hertz. 0 disables the send.",
         "Default: 1");
-    cfg.param<double>("hz", p_hz, p_hz, true);
     if (p_hz > 0) {
         p_timeout_timer.set_rate(p_hz);
         p_timeout_timer.start();

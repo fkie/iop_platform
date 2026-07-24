@@ -68,16 +68,14 @@ void PlatformMode_ReceiveFSM::setupNotifications()
 void PlatformMode_ReceiveFSM::setupIopConfiguration()
 {
     iop::Config cfg(cmp, "PlatformMode");
-    cfg.declare_param<uint8_t>("platform_mode", platform_mode, true,
+    cfg.param_named<uint8_t>("platform_mode", platform_mode, platform_mode, platform_mode_map(), true,
         rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
         "Initial platform mode.",
         "Default: 0; 0:Standard_Operating, 1:Training, 2:Maintenance");
-    cfg.param_named<uint8_t>("platform_mode", platform_mode, platform_mode, platform_mode_map(), true, "");
-    cfg.declare_param<std::vector<uint8_t>>("supported_modes", p_supported_modes, true,
+    cfg.param_vector<std::vector<uint8_t>>("supported_modes", p_supported_modes, p_supported_modes, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER_ARRAY,
         "Supported platform modes.",
         "Default: [0]");
-    cfg.param_vector<std::vector<uint8_t>>("supported_modes", p_supported_modes, p_supported_modes, true);
 
     if (p_supported_modes.size() == 0) {
         p_supported_modes.push_back(0);

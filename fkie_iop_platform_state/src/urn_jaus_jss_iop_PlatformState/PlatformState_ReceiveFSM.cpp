@@ -68,17 +68,9 @@ void PlatformState_ReceiveFSM::setupNotifications()
 void PlatformState_ReceiveFSM::setupIopConfiguration()
 {
     iop::Config cfg(cmp, "PlatformState");
-    cfg.declare_param<uint8_t>("init_platform_state", p_init_platform_state, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
-        "Default state on start.",
-        "Default: 1; 0:initialize, 1:operational, 2:shutdown, 3:system_abort, 4:emergency, 5:render_useless");
     std::vector<std::string> s_sup_default;
     s_sup_default.push_back("operational");
     s_sup_default.push_back("emergency");
-    cfg.declare_param<std::vector<std::string>>("supported_states", s_sup_default, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
-        "A list with supported states.",
-        "Default: [operational, emergency]; Possible entries: initialize, operational, shutdown, system_abort, emergency, render_useless");
     p_own_address = *(jausRouter->getJausAddress());
     pEvents_ReceiveFSM->get_event_handler().register_query(QueryPlatformState::ID);
     std::map<uint8_t, std::string> ps_names;
@@ -88,8 +80,14 @@ void PlatformState_ReceiveFSM::setupIopConfiguration()
     ps_names[3] = "system_abort";
     ps_names[4] = "emergency";
     ps_names[5] = "render_useless";
-    cfg.param_named("init_platform_state", p_init_platform_state, p_init_platform_state, ps_names);
-    cfg.param_vector<std::vector<std::string>>("supported_states", p_supported_states, s_sup_default);
+    cfg.param_named<uint8_t>("init_platform_state", p_init_platform_state, p_init_platform_state, ps_names, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
+        "Default state on start.",
+        "Default: 1; 0:initialize, 1:operational, 2:shutdown, 3:system_abort, 4:emergency, 5:render_useless");
+    cfg.param_vector<std::vector<std::string>>("supported_states", p_supported_states, s_sup_default, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
+        "A list with supported states.",
+        "Default: [operational, emergency]; Possible entries: initialize, operational, shutdown, system_abort, emergency, render_useless");
     // normalize string to lower case
     std::vector<std::string> nomalizedlist;
     std::vector<std::string>::iterator it;
